@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D3 Time-Filtered Dynamic Graph</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      #controls {
+        padding: 10px;
+        background: #d3d0d0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      label {
+        font-size: 14px;
+      }
+      input[type="range"] {
+        flex: 1;
+      }
+      #dynamic-graph-container {
+        background-color: rgb(36, 41, 41);
+        flex: 1;
+      }
+      /* Style links with a custom color */
+      #dynamic-graph-container svg line {
+        stroke: #ff4500;
+        stroke-width: 2px;
+        stroke-opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="controls">
+      <label for="time-slider">Time: <span id="time-value"></span></label>
+      <input
+        type="range"
+        id="time-slider"
+        min="0"
+        max="100"
+        step="1"
+        value="0"
+      />
+    </div>
+    <div id="dynamic-graph-container"></div>
+
+    <script type="module">
+      import * as d3 from "d3";
+      import DynamicGraph from "./src/d3-dynamic-graph";
+
+      // Data with many nodes and time ranges
+      const nodes = [
+        { id: "foo", radius: 100, start: 0, end: 60 },
+        { id: "bar", radius: 50, start: 20, end: 100 },
+        { id: "bat", radius: 50, start: 40, end: 80 },
+        { id: "baz", radius: 34, start: 70, end: 100 },
+        { id: "qux", radius: 42, start: 10, end: 50 },
+        { id: "quux", radius: 82, start: 30, end: 90 },
+        { id: "corge", radius: 18, start: 0, end: 30 },
+        { id: "grault", radius: 14, start: 60, end: 100 },
+        { id: "garply", radius: 61, start: 45, end: 75 },
+        { id: "waldo", radius: 16, start: 20, end: 60 },
+        { id: "fred", radius: 51, start: 5, end: 55 },
+        { id: "plugh", radius: 26, start: 25, end: 85 },
+        { id: "xyzzy", radius: 19, start: 50, end: 100 },
+        { id: "thud", radius: 17, start: 0, end: 20 },
+        { id: "alpha", radius: 40, start: 15, end: 45 },
+        { id: "beta", radius: 12, start: 5, end: 95 },
+        { id: "gamma", radius: 10, start: 10, end: 70 },
+        { id: "delta", radius: 14, start: 60, end: 100 },
+        { id: "epsilon", radius: 31, start: 40, end: 80 },
+        { id: "zeta", radius: 16, start: 20, end: 65 },
+      ];
+      const links = [
+        {
+          source: "foo",
+          sourceId: "foo",
+          target: "bar",
+          targetId: "bar",
+          start: 10,
+          end: 90,
+        },
+        {
+          source: "foo",
+          sourceId: "foo",
+          target: "bat",
+          targetId: "bat",
+          start: 50,
+          end: 70,
+        },
+        {
+          source: "bar",
+          sourceId: "bar",
+          target: "baz",
+          targetId: "baz",
+          start: 75,
+          end: 100,
+        },
+        {
+          source: "qux",
+          sourceId: "qux",
+          target: "foo",
+          targetId: "foo",
+          start: 10,
+          end: 50,
+        },
+        {
+          source: "quux",
+          sourceId: "quux",
+          target: "bar",
+          targetId: "bar",
+          start: 35,
+          end: 90,
+        },
+        {
+          source: "corge",
+          sourceId: "corge",
+          target: "bat",
+          targetId: "bat",
+          start: 5,
+          end: 25,
+        },
+        {
+          source: "grault",
+          sourceId: "grault",
+          target: "baz",
+          targetId: "baz",
+          start: 65,
+          end: 100,
+        },
+        {
+          source: "garply",
+          sourceId: "garply",
+          target: "qux",
+          targetId: "qux",
+          start: 50,
+          end: 75,
+        },
+        {
+          source: "waldo",
+          sourceId: "waldo",
+          target: "quux",
+          targetId: "quux",
+          start: 25,
+          end: 60,
+        },
+        {
+          source: "fred",
+          sourceId: "fred",
+          target: "plugh",
+          targetId: "plugh",
+          start: 5,
+          end: 55,
+        },
+        {
+          source: "xyzzy",
+          sourceId: "xyzzy",
+          target: "thud",
+          targetId: "thud",
+          start: 50,
+          end: 100,
+        },
+        {
+          source: "alpha",
+          sourceId: "alpha",
+          target: "beta",
+          targetId: "beta",
+          start: 20,
+          end: 45,
+        },
+        {
+          source: "gamma",
+          sourceId: "gamma",
+          target: "delta",
+          targetId: "delta",
+          start: 60,
+          end: 95,
+        },
+        {
+          source: "epsilon",
+          sourceId: "epsilon",
+          target: "zeta",
+          targetId: "zeta",
+          start: 42,
+          end: 78,
+        },
+        {
+          source: "zeta",
+          sourceId: "zeta",
+          target: "gamma",
+          targetId: "gamma",
+          start: 55,
+          end: 90,
+        },
+        {
+          source: "bar",
+          sourceId: "bar",
+          target: "xyzzy",
+          targetId: "xyzzy",
+          start: 50,
+          end: 100,
+        },
+        {
+          source: "bat",
+          sourceId: "bat",
+          target: "alpha",
+          targetId: "alpha",
+          start: 40,
+          end: 70,
+        },
+        {
+          source: "corge",
+          sourceId: "corge",
+          target: "delta",
+          targetId: "delta",
+          start: 0,
+          end: 30,
+        },
+        {
+          source: "plugh",
+          sourceId: "plugh",
+          target: "epsilon",
+          targetId: "epsilon",
+          start: 30,
+          end: 85,
+        },
+      ];
+
+      // Select container and measure bounds
+      const container = d3.select("#dynamic-graph-container");
+      function getSize() {
+        const { width, height } = container.node().getBoundingClientRect();
+        return { width, height };
+      }
+
+      // Create graph with dynamic size
+      let { width, height } = getSize();
+      const vis = DynamicGraph(container, d3, { width, height })
+        .nodeRadius((d) => d.radius)
+        .tooltipInnerHTML((d) => d.id);
+
+      // Re-render on resize
+      window.addEventListener("resize", () => {
+        const size = getSize();
+        //vis.resize(size.width, size.height);
+        // reapply current filter
+        filterByTime(+slider.property("value"));
+      });
+
+      // Time filter logic
+      function filterByTime(t) {
+        const activeNodes = nodes.filter((n) => n.start <= t && n.end >= t);
+        const activeIds = new Set(activeNodes.map((n) => n.id));
+        const activeLinks = links
+          .filter((l) => l.start <= t && l.end >= t)
+          // use the _string_ IDs, not the mutated objects:
+          .filter(
+            (l) => activeIds.has(l.sourceId) && activeIds.has(l.targetId)
+          );
+        vis.updateVis(activeNodes, activeLinks);
+      }
+
+      // Slider
+      const slider = d3.select("#time-slider");
+      const timeLabel = d3.select("#time-value");
+      slider.on("input", function () {
+        const t = +this.value;
+        timeLabel.text(t);
+        filterByTime(t);
+      });
+
+      // Initial render
+      timeLabel.text(slider.property("value"));
+      filterByTime(+slider.property("value"));
+    </script>
+  </body>
+</html>
