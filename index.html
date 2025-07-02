@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D3 Time-Filtered Dynamic Graph</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      #controls {
+        padding: 10px;
+        background: #d3d0d0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      label {
+        font-size: 14px;
+      }
+      input[type="range"] {
+        flex: 1;
+      }
+      #dynamic-graph-container {
+        background-color: rgb(36, 41, 41);
+        flex: 1;
+      }
+      /* Style links with a custom color */
+      #dynamic-graph-container svg line {
+        stroke: #ff4500;
+        stroke-width: 2px;
+        stroke-opacity: 0.8;
+      }
+    </style>
+    <script type="module" crossorigin src="/dynamic-graph/assets/index-DQ3snr3T.js"></script>
+  </head>
+  <body>
+    <div id="controls">
+      <label for="time-slider">Time: <span id="time-value"></span></label>
+      <input
+        type="range"
+        id="time-slider"
+        min="0"
+        max="100"
+        step="1"
+        value="0"
+      />
+    </div>
+    <div id="dynamic-graph-container"></div>
+
+  </body>
+</html>
