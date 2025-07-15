@@ -14,7 +14,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     focusStrokeThickness: 5,
     // Link and Node functions
     linkColor: (link) => "white",
-    nodeColor: (node) => "skyblue",
+    nodeColor: (node) => node.color || "skyblue",
     nodeStartXPos: null, // function, returns pixels
     nodeStartYPos: null, // function, returns pixels
     nodeRadius: (node) => 5, // pixles
@@ -65,15 +65,16 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     tooltip.transition().duration(500).style("opacity", 0);
   };
 
-  const setLinkStrokeWidth = (link, thickness) =>
+  const setLinkStrokeWidth = (targetLink, thickness) =>
     d3SelectedVisContainer
-      .select(
-        ".link-" +
-          link.source[pubVar.nodeRefProp] +
-          ".link-" +
-          link.target[pubVar.nodeRefProp]
+      .selectAll("line.link")
+      .filter(
+        (d) =>
+          d.source[pubVar.nodeRefProp] === targetLink.source[pubVar.nodeRefProp] &&
+          d.target[pubVar.nodeRefProp] === targetLink.target[pubVar.nodeRefProp]
       )
       .attr("stroke-width", thickness);
+
 
   // Toggles node and its nearest neighbors display, with respect to isInFocus param
   const changeNodeFocus = (node, links, isInFocus) => {
@@ -86,10 +87,10 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     d3SelectedVisContainer.selectAll("line.link").style("opacity", (link) => {
       if (link.source[pubVar.nodeRefProp] === node[pubVar.nodeRefProp]) {
         neighborsSet.add(link.target[pubVar.nodeRefProp]);
-        setLinkStrokeWidth(link, strokeThickness);
+        //setLinkStrokeWidth(link, strokeThickness);
       } else if (link.target[pubVar.nodeRefProp] === node[pubVar.nodeRefProp]) {
         neighborsSet.add(link.source[pubVar.nodeRefProp]);
-        setLinkStrokeWidth(link, strokeThickness);
+        //setLinkStrokeWidth(link, strokeThickness);
       }
     });
     // Set the opacity of ego-node and neighbor nodes
@@ -150,6 +151,8 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
       })
   }
 
+
+
   // 5. UPDATE GRAPH AFTER FILTERING DATA -------------------------------------------------------------------------
   function updateVis(nodes, links) {
     // Initialize layout simulation at startup
@@ -159,15 +162,16 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
         .force(
           "link",
           d3.forceLink().id((node) => node[pubVar.nodeRefProp])
-          .distance(10)     // rest length = 100px
+          .distance(1)     // rest length = 100px
+          .strength(1)
         )
-        .force("charge", d3.forceManyBody().strength(-500))
+        .force("charge", d3.forceManyBody().strength(-1800))
         .force("x", d3.forceX(pubVar.width / 2).strength(pubVar.centeringForce))
         .force(
           "y",
           d3.forceY(pubVar.height / 2).strength(pubVar.centeringForce)
         )
-        .velocityDecay(0.9)
+        .velocityDecay(0.95)
         .force("bounds", () => {
           for (const d of simulation.nodes()) {
             const r = pubVar.nodeRadius(d);
@@ -186,7 +190,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
         })
         .force("collide", 
           d3.forceCollide()
-            .radius(d => pubVar.nodeRadius(d) + 5)   // 5px padding
+            .radius(d => pubVar.nodeRadius(d) + 15)   // 5px padding
             .strength(0.7)                           // tuning parameter
         );
 
@@ -304,7 +308,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
           `link link-${d.sourceId} link-${d.targetId}`
         )
         .attr("stroke", pubVar.linkColor)
-        .attr("stroke-width", pubVar.unfocusStrokeThickness)
+        .attr("stroke-width", (d) => d.thickness || pubVar.unfocusStrokeThickness)
         .attr("stroke-opacity", 0);
 
     // FADE in the new ones
@@ -313,12 +317,15 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
         .attr("stroke-opacity", 1);
 
     // MERGE for the simulation
-    link = linkEnter.merge(link);
+    link = linkEnter
+      .merge(link)
+      .attr("stroke-width", (d) => d.thickness || pubVar.unfocusStrokeThickness);
+
 
     // Update and restart the simulation
     simulation.nodes(nodes);
     simulation.force("link").links(links);
-    simulation.alpha(0.8).restart();
+    simulation.alpha(0.2).restart();
 
   }
 
