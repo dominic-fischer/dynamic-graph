@@ -7,7 +7,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     width: window.innerWidth, // pixles
     height: window.innerHeight, // pixles
     transitionTime: 10, // milliseconds
-    centeringForce: 0.05,
+    centeringForce: 0.04,
     // e.g. Nodes: [{id: "foo"}, {id: "bar"}] Links: [{source: "foo", target: "bar"}]
     nodeRefProp: "id",
     unfocusOpacity: 0.6,
@@ -246,15 +246,15 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
           "link",
           d3.forceLink().id((node) => node[pubVar.nodeRefProp])
           .distance(35)     // rest length = 100px
-          .strength(0.3)
+          .strength(0.1)
         )
-        .force("charge", d3.forceManyBody().strength(-1200))
+        .force("charge", d3.forceManyBody().strength(-800))
         .force("x", d3.forceX(pubVar.width / 2).strength(pubVar.centeringForce))
         .force(
           "y",
           d3.forceY(pubVar.height / 2).strength(pubVar.centeringForce)
         )
-        .velocityDecay(0.2)
+        .velocityDecay(0.4)
         .force("bounds", () => {
           for (const d of simulation.nodes()) {
             const r = pubVar.nodeRadius(d);
@@ -473,7 +473,33 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     // Update and restart the simulation
     simulation.nodes(nodes);
     simulation.force("link").links(links);
-    simulation.alpha(0.6).restart();
+    // Start simulation at alpha = 0.3
+    let startAlpha = 0.00001;
+    let targetAlpha = 0.6;
+    let duration = 2000; // in ms
+
+    // Set initial alpha
+    simulation.alpha(startAlpha).restart();
+    // pause for a moment to let the initial positions settle
+    setTimeout(() => {
+      simulation.alpha(startAlpha).restart();
+    }, 1000);
+
+    // Use d3.timer to gradually increase alpha
+    const startTime = Date.now();
+    const interpolator = d3.interpolateNumber(startAlpha, targetAlpha);
+
+    const rampUp = d3.timer(() => {
+      let elapsed = Date.now() - startTime;
+      let t = Math.min(1, elapsed / duration); // clamp between 0 and 1
+      simulation.alpha(interpolator(t)).restart();
+
+      if (t === 1) {
+        rampUp.stop(); // stop timer after ramp-up is done
+      }
+      });
+
+    simulation.velocityDecay(0.4);
 
   }
 
