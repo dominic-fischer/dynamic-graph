@@ -31,12 +31,11 @@
       }
       /* Style links with a custom color */
       #dynamic-graph-container svg line {
-        stroke: #ff4500;
-        stroke-width: 2px;
+        stroke: #e3ebef;
         stroke-opacity: 0.8;
       }
     </style>
-    <script type="module" crossorigin src="/dynamic-graph/assets/index-DQ3snr3T.js"></script>
+    <script type="module" crossorigin src="/dynamic-graph/assets/index-DUg4BxsQ.js"></script>
   </head>
   <body>
     <div id="controls">
@@ -44,10 +43,20 @@
       <input
         type="range"
         id="time-slider"
-        min="0"
-        max="100"
+        min="1520"
+        max="1575"
         step="1"
         value="0"
+      />
+
+      <label for="topn-slider">Top N: <span id="topn-value">All</span></label>
+      <input
+        type="range"
+        id="topn-slider"
+        min="0"
+        max="50"
+        step="5"
+        value="50"
       />
     </div>
     <div id="dynamic-graph-container"></div>
