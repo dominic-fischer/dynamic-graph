@@ -81,7 +81,7 @@
       let { width, height } = getSize();
       const vis = DynamicGraph(container, d3, { width, height })
         .nodeRadius((d) => d.radius)
-        .tooltipInnerHTML((d) => d.name);
+        //.tooltipInnerHTML((d) => d.name);
 
       // Re-render on resize
       window.addEventListener("resize", () => {
@@ -103,6 +103,8 @@
 
       // Time filter logic
       function filterByTime(t, topN = null) {
+        vis.pubVar({ year: t });  // ← update DynamicGraph with current slider value
+
         let filteredNodes = nodes.filter((n) => n.start <= t && n.end >= t);
 
         if (topN !== null && topN > 0 && topN < filteredNodes.length) {
