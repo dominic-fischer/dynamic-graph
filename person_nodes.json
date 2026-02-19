@@ -7,7 +7,7 @@
     "end": 1565,
     "location": "l491",
     "starting_loc_x": 0,
-    "starting_loc_y": 1,
+    "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#ceffd1",
@@ -120,6 +120,24 @@
     ]
   },
   {
+    "id": "p8049",
+    "name": "Joachim Vadian (von Watt)",
+    "radius": 43,
+    "start": 1532,
+    "end": 1551,
+    "location": "l473",
+    "starting_loc_x": 1,
+    "starting_loc_y": 2,
+    "colorSchedule": [
+      [
+        "#ffdfdc",
+        1532,
+        1551,
+        "St. Gallen"
+      ]
+    ]
+  },
+  {
     "id": "p396",
     "name": "Johannes Blasius",
     "radius": 15,
@@ -141,10 +159,10 @@
     "id": "p8011",
     "name": "Rudolf Gwalther d.Ä.",
     "radius": 32,
-    "start": 1538,
+    "start": 1537,
     "end": 1575,
     "location": "l28",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
@@ -240,6 +258,72 @@
     ]
   },
   {
+    "id": "p487",
+    "name": "Heinrich Bullinger d.J. (Sohn des Reformators)",
+    "radius": 16,
+    "start": 1552,
+    "end": 1575,
+    "location": "l491",
+    "starting_loc_x": 0,
+    "starting_loc_y": 0,
+    "colorSchedule": [
+      [
+        "#ceffd1",
+        1553,
+        1555,
+        "Straßburg"
+      ],
+      [
+        "#ffeeab",
+        1556,
+        1557,
+        "Wittenberg"
+      ],
+      [
+        "#e8fff6",
+        1558,
+        1558,
+        "Baden"
+      ],
+      [
+        "#fff4fd",
+        1559,
+        1560,
+        "Zollikon"
+      ],
+      [
+        "#fff4fd",
+        1561,
+        1569,
+        "Zollikon"
+      ],
+      [
+        "#f0ebff",
+        1570,
+        1570,
+        "Kappel am Albis"
+      ],
+      [
+        "#f0ebff",
+        1571,
+        1571,
+        "Kappel am Albis"
+      ],
+      [
+        "#f8ffe8",
+        1572,
+        1572,
+        "Berg am Irchel"
+      ],
+      [
+        "#ffffff",
+        1573,
+        1575,
+        "Zürich"
+      ]
+    ]
+  },
+  {
     "id": "p8018",
     "name": "Johannes Haller d.J.",
     "radius": 100,
@@ -247,7 +331,7 @@
     "end": 1575,
     "location": "l512",
     "starting_loc_x": 0,
-    "starting_loc_y": 1,
+    "starting_loc_y": 2,
     "colorSchedule": [
       [
         "#faffd0",
@@ -300,6 +384,36 @@
     ]
   },
   {
+    "id": "p527",
+    "name": "Johannes Reinhard Bullinger (Bruder des Reformators)",
+    "radius": 13,
+    "start": 1532,
+    "end": 1570,
+    "location": "l375",
+    "starting_loc_x": 2,
+    "starting_loc_y": 1,
+    "colorSchedule": [
+      [
+        "#ecf5ff",
+        1532,
+        1553,
+        "Ottenbach"
+      ],
+      [
+        "#ecf5ff",
+        1554,
+        1562,
+        "Ottenbach"
+      ],
+      [
+        "#f0ebff",
+        1563,
+        1570,
+        "Kappel am Albis"
+      ]
+    ]
+  },
+  {
     "id": "p654",
     "name": "Johannes Comander",
     "radius": 19,
@@ -318,10 +432,46 @@
     ]
   },
   {
+    "id": "p4091",
+    "name": "Huldrych Zwingli",
+    "radius": 10,
+    "start": 1530,
+    "end": 1530,
+    "location": "l587",
+    "starting_loc_x": 1,
+    "starting_loc_y": 1,
+    "colorSchedule": [
+      [
+        "#ffffff",
+        1530,
+        1530,
+        "Zürich"
+      ]
+    ]
+  },
+  {
+    "id": "p473",
+    "name": "Heinrich Buchter",
+    "radius": 10,
+    "start": 1545,
+    "end": 1547,
+    "location": "l587",
+    "starting_loc_x": 1,
+    "starting_loc_y": 1,
+    "colorSchedule": [
+      [
+        "#ffffff",
+        1547,
+        1547,
+        "Zürich"
+      ]
+    ]
+  },
+  {
     "id": "p8051",
     "name": "Anna Bullinger (geb. Adlischwyler)",
     "radius": 11,
-    "start": 1534,
+    "start": 1532,
     "end": 1556,
     "location": "l587",
     "starting_loc_x": 1,
@@ -342,7 +492,7 @@
     "start": 1528,
     "end": 1564,
     "location": "l257",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 2,
     "colorSchedule": [
       [
@@ -402,56 +552,86 @@
     ]
   },
   {
-    "id": "p1391",
-    "name": "Berchtold Haller",
-    "radius": 24,
-    "start": 1531,
-    "end": 1536,
-    "location": "l41",
-    "starting_loc_x": 2,
-    "starting_loc_y": 0,
-    "colorSchedule": [
-      [
-        "#d6f1ff",
-        1531,
-        1536,
-        "Bern"
-      ]
-    ]
-  },
-  {
-    "id": "p8054",
-    "name": "Markus (Marx) Bertschi (Bersius)",
-    "radius": 10,
-    "start": 1531,
-    "end": 1555,
+    "id": "p8101",
+    "name": "Lelio Sozzini (Socinus)",
+    "radius": 14,
+    "start": 1548,
+    "end": 1561,
     "location": "l28",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#d9fff8",
-        1531,
-        1555,
+        1549,
+        1549,
         "Basel"
-      ]
-    ]
-  },
-  {
-    "id": "p8428",
-    "name": "Johannes Müller (Rhellicannus)",
-    "radius": 12,
-    "start": 1531,
-    "end": 1538,
-    "location": "l41",
-    "starting_loc_x": 2,
-    "starting_loc_y": 0,
-    "colorSchedule": [
+      ],
       [
-        "#d6f1ff",
-        1531,
-        1538,
-        "Bern"
+        "#ffeeab",
+        1550,
+        1550,
+        "Wittenberg"
+      ],
+      [
+        "#ffaff9",
+        1551,
+        1551,
+        "Siena"
+      ],
+      [
+        "#ffffff",
+        1552,
+        1552,
+        "Zürich"
+      ],
+      [
+        "#ffffff",
+        1553,
+        1553,
+        "Zürich"
+      ],
+      [
+        "#d9fff8",
+        1554,
+        1554,
+        "Basel"
+      ],
+      [
+        "#ffffff",
+        1555,
+        1555,
+        "Zürich"
+      ],
+      [
+        "#ffffff",
+        1556,
+        1556,
+        "Zürich"
+      ],
+      [
+        "#faffd0",
+        1557,
+        1558,
+        "Tübingen"
+      ],
+      [
+        "#ffb3aa",
+        1559,
+        1559,
+        "Wien"
+      ],
+      [
+        "#ffb19b",
+        1560,
+        1560,
+        "Krakau"
+      ],
+      [
+        "#ffffff",
+        1561,
+        1561,
+        "Zürich"
       ]
     ]
   },
@@ -459,10 +639,10 @@
     "id": "p8440",
     "name": "Gervasius Schuler (Scholasticus)",
     "radius": 20,
-    "start": 1531,
+    "start": 1530,
     "end": 1563,
     "location": "l28",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
@@ -492,55 +672,49 @@
     ]
   },
   {
-    "id": "p8415",
-    "name": "Martin Micronius (de Cleyne)",
-    "radius": 13,
-    "start": 1549,
-    "end": 1559,
-    "location": "l296",
-    "starting_loc_x": 0,
-    "starting_loc_y": 0,
-    "colorSchedule": [
-      [
-        "#a0ffd7",
-        1549,
-        1553,
-        "London"
-      ],
-      [
-        "#bfffa5",
-        1554,
-        1554,
-        "Emden"
-      ],
-      [
-        "#bfffa5",
-        1555,
-        1555,
-        "Emden"
-      ],
-      [
-        "#bfffa4",
-        1556,
-        1559,
-        "Norden"
-      ]
-    ]
-  },
-  {
     "id": "p8418",
     "name": "Oswald Myconius (Geißhüsler)",
     "radius": 82,
     "start": 1532,
     "end": 1552,
     "location": "l28",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#d9fff8",
         1532,
         1552,
+        "Basel"
+      ]
+    ]
+  },
+  {
+    "id": "p4349",
+    "name": "Andreas Rudolff Bodenstein gen. Karlstadt",
+    "radius": 11,
+    "start": 1532,
+    "end": 1541,
+    "location": "l10",
+    "starting_loc_x": 1,
+    "starting_loc_y": 2,
+    "colorSchedule": [
+      [
+        "#ffdada",
+        1532,
+        1532,
+        "Altstätten"
+      ],
+      [
+        "#ffdada",
+        1533,
+        1533,
+        "Altstätten"
+      ],
+      [
+        "#d9fff8",
+        1534,
+        1541,
         "Basel"
       ]
     ]
@@ -595,7 +769,7 @@
     "end": 1547,
     "location": "l491",
     "starting_loc_x": 0,
-    "starting_loc_y": 1,
+    "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#ceffd1",
@@ -637,7 +811,7 @@
     "end": 1541,
     "location": "l491",
     "starting_loc_x": 0,
-    "starting_loc_y": 1,
+    "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#ceffd1",
@@ -651,7 +825,7 @@
     "id": "p8412",
     "name": "Kaspar Megander (Großmann)",
     "radius": 16,
-    "start": 1531,
+    "start": 1532,
     "end": 1544,
     "location": "l41",
     "starting_loc_x": 2,
@@ -678,7 +852,7 @@
     "start": 1532,
     "end": 1542,
     "location": "l257",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 2,
     "colorSchedule": [
       [
@@ -696,7 +870,7 @@
     "start": 1537,
     "end": 1552,
     "location": "l28",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
@@ -708,28 +882,10 @@
     ]
   },
   {
-    "id": "p1055",
-    "name": "Martin Frecht",
-    "radius": 12,
-    "start": 1532,
-    "end": 1544,
-    "location": "l513",
-    "starting_loc_x": 0,
-    "starting_loc_y": 2,
-    "colorSchedule": [
-      [
-        "#ffebcd",
-        1532,
-        1544,
-        "Ulm"
-      ]
-    ]
-  },
-  {
     "id": "p8437",
     "name": "Erasmus Schmid (Fabricius)",
     "radius": 11,
-    "start": 1535,
+    "start": 1531,
     "end": 1544,
     "location": "l411",
     "starting_loc_x": 0,
@@ -777,7 +933,7 @@
     "id": "p8127",
     "name": "Konrad Pellikan (Kürschner)",
     "radius": 16,
-    "start": 1530,
+    "start": 1531,
     "end": 1554,
     "location": "l587",
     "starting_loc_x": 1,
@@ -799,7 +955,7 @@
     "end": 1562,
     "location": "l2",
     "starting_loc_x": 1,
-    "starting_loc_y": 1,
+    "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#e3fffe",
@@ -840,102 +996,6 @@
     ]
   },
   {
-    "id": "p3429",
-    "name": "Pierre Viret",
-    "radius": 13,
-    "start": 1539,
-    "end": 1566,
-    "location": "l280",
-    "starting_loc_x": 2,
-    "starting_loc_y": 0,
-    "colorSchedule": [
-      [
-        "#cbeaff",
-        1539,
-        1540,
-        "Lausanne"
-      ],
-      [
-        "#c5e6ff",
-        1541,
-        1541,
-        "Genf"
-      ],
-      [
-        "#c5e6ff",
-        1542,
-        1544,
-        "Genf"
-      ],
-      [
-        "#cbeaff",
-        1545,
-        1545,
-        "Lausanne"
-      ],
-      [
-        "#cbeaff",
-        1546,
-        1546,
-        "Lausanne"
-      ],
-      [
-        "#c5e6ff",
-        1547,
-        1547,
-        "Genf"
-      ],
-      [
-        "#cbeaff",
-        1548,
-        1551,
-        "Lausanne"
-      ],
-      [
-        "#cbeaff",
-        1552,
-        1552,
-        "Lausanne"
-      ],
-      [
-        "#cbf0ff",
-        1553,
-        1553,
-        "Orbe"
-      ],
-      [
-        "#cbf0ff",
-        1554,
-        1556,
-        "Orbe"
-      ],
-      [
-        "#cbeaff",
-        1557,
-        1559,
-        "Lausanne"
-      ],
-      [
-        "#c5e6ff",
-        1560,
-        1560,
-        "Genf"
-      ],
-      [
-        "#c5e6ff",
-        1561,
-        1563,
-        "Genf"
-      ],
-      [
-        "#bbe4ff",
-        1564,
-        1566,
-        "Lyon"
-      ]
-    ]
-  },
-  {
     "id": "p1309",
     "name": "Sebastian Grübel d.Ä.",
     "radius": 11,
@@ -966,32 +1026,20 @@
     ]
   },
   {
-    "id": "p8369",
-    "name": "Hemmann (Hermann) Haberer",
-    "radius": 10,
-    "start": 1533,
-    "end": 1546,
-    "location": "l203",
+    "id": "p1888",
+    "name": "Hans Rudolf Lavater",
+    "radius": 11,
+    "start": 1532,
+    "end": 1535,
+    "location": "l266",
     "starting_loc_x": 1,
     "starting_loc_y": 1,
     "colorSchedule": [
       [
-        "#e6fcff",
-        1533,
-        1533,
-        "Hallwil"
-      ],
-      [
-        "#e6fcff",
-        1534,
-        1545,
-        "Hallwil"
-      ],
-      [
-        "#e6fff7",
-        1546,
-        1546,
-        "Brugg"
+        "#fff3ea",
+        1532,
+        1535,
+        "Kyburg"
       ]
     ]
   },
@@ -1002,7 +1050,7 @@
     "start": 1533,
     "end": 1559,
     "location": "l28",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
@@ -1022,42 +1070,6 @@
         1553,
         1559,
         "Zürich"
-      ]
-    ]
-  },
-  {
-    "id": "p3375",
-    "name": "Pier Paolo Vergerio",
-    "radius": 32,
-    "start": 1549,
-    "end": 1564,
-    "location": "l525",
-    "starting_loc_x": 2,
-    "starting_loc_y": 2,
-    "colorSchedule": [
-      [
-        "#ffcff2",
-        1549,
-        1552,
-        "Vicosoprano"
-      ],
-      [
-        "#faffd0",
-        1553,
-        1554,
-        "Tübingen"
-      ],
-      [
-        "#faffcc",
-        1555,
-        1555,
-        "Stuttgart"
-      ],
-      [
-        "#faffd0",
-        1556,
-        1564,
-        "Tübingen"
       ]
     ]
   },
@@ -1104,73 +1116,13 @@
     ]
   },
   {
-    "id": "p1553",
-    "name": "Christian Hochholzer",
-    "radius": 15,
-    "start": 1533,
-    "end": 1565,
-    "location": "l587",
-    "starting_loc_x": 1,
-    "starting_loc_y": 1,
-    "colorSchedule": [
-      [
-        "#ffffff",
-        1533,
-        1533,
-        "Zürich"
-      ],
-      [
-        "#ffffff",
-        1534,
-        1540,
-        "Zürich"
-      ],
-      [
-        "#e1ffbe",
-        1541,
-        1541,
-        "Frankfurt am Main"
-      ],
-      [
-        "#e1ffbe",
-        1542,
-        1542,
-        "Frankfurt am Main"
-      ],
-      [
-        "#fff7e2",
-        1543,
-        1543,
-        "Stein am Rhein"
-      ],
-      [
-        "#e3fffe",
-        1544,
-        1549,
-        "Aarau"
-      ],
-      [
-        "#e3fffe",
-        1550,
-        1558,
-        "Aarau"
-      ],
-      [
-        "#fff7e2",
-        1559,
-        1565,
-        "Stein am Rhein"
-      ]
-    ]
-  },
-  {
     "id": "p1365",
     "name": "Simon Grynäus",
     "radius": 18,
     "start": 1534,
     "end": 1541,
     "location": "l28",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
@@ -1196,60 +1148,6 @@
         1538,
         1548,
         "Bern"
-      ]
-    ]
-  },
-  {
-    "id": "p330",
-    "name": "Bartholomäus Bertlin",
-    "radius": 12,
-    "start": 1534,
-    "end": 1562,
-    "location": "l531",
-    "starting_loc_x": 1,
-    "starting_loc_y": 2,
-    "colorSchedule": [
-      [
-        "#ffd7d0",
-        1534,
-        1536,
-        "Waltenhofen"
-      ],
-      [
-        "#ffd7d0",
-        1537,
-        1537,
-        "Waltenhofen"
-      ],
-      [
-        "#ffd1cc",
-        1538,
-        1539,
-        "Füssen"
-      ],
-      [
-        "#ffd1cc",
-        1540,
-        1543,
-        "Füssen"
-      ],
-      [
-        "#ffdecf",
-        1544,
-        1544,
-        "Woringen"
-      ],
-      [
-        "#ffdecf",
-        1545,
-        1553,
-        "Woringen"
-      ],
-      [
-        "#ffe0cf",
-        1554,
-        1562,
-        "Memmingen"
       ]
     ]
   },
@@ -1291,7 +1189,7 @@
     "end": 1550,
     "location": "l285",
     "starting_loc_x": 1,
-    "starting_loc_y": 1,
+    "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#e6fffe",
@@ -1386,7 +1284,7 @@
     "start": 1528,
     "end": 1568,
     "location": "l257",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 2,
     "colorSchedule": [
       [
@@ -1458,7 +1356,7 @@
     "start": 1535,
     "end": 1548,
     "location": "l257",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 2,
     "colorSchedule": [
       [
@@ -1495,7 +1393,7 @@
     "end": 1549,
     "location": "l491",
     "starting_loc_x": 0,
-    "starting_loc_y": 1,
+    "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#ceffd1",
@@ -1602,6 +1500,36 @@
     ]
   },
   {
+    "id": "p8090",
+    "name": "Heinrich Linggi",
+    "radius": 10,
+    "start": 1536,
+    "end": 1549,
+    "location": "l69",
+    "starting_loc_x": 1,
+    "starting_loc_y": 1,
+    "colorSchedule": [
+      [
+        "#e6fff7",
+        1536,
+        1536,
+        "Brugg"
+      ],
+      [
+        "#e6fff7",
+        1537,
+        1547,
+        "Brugg"
+      ],
+      [
+        "#f8ffe3",
+        1548,
+        1549,
+        "Schaffhausen"
+      ]
+    ]
+  },
+  {
     "id": "p1560",
     "name": "John Hooper",
     "radius": 14,
@@ -1609,7 +1537,7 @@
     "end": 1554,
     "location": "l491",
     "starting_loc_x": 0,
-    "starting_loc_y": 1,
+    "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#ceffd1",
@@ -1668,32 +1596,44 @@
     ]
   },
   {
-    "id": "p714",
-    "name": "Celio Secondo Curione",
-    "radius": 19,
-    "start": 1542,
-    "end": 1569,
-    "location": "l280",
+    "id": "p8461",
+    "name": "Johann Jakob Wick (Vikius)",
+    "radius": 11,
+    "start": 1537,
+    "end": 1561,
+    "location": "l242",
     "starting_loc_x": 2,
-    "starting_loc_y": 0,
+    "starting_loc_y": 1,
     "colorSchedule": [
       [
-        "#cbeaff",
+        "#f0ebff",
+        1537,
+        1537,
+        "Kappel am Albis"
+      ],
+      [
+        "#f0ebff",
+        1538,
+        1540,
+        "Kappel am Albis"
+      ],
+      [
+        "#e1ffbe",
+        1541,
+        1541,
+        "Frankfurt am Main"
+      ],
+      [
+        "#e1ffbe",
         1542,
-        1545,
-        "Lausanne"
+        1560,
+        "Frankfurt am Main"
       ],
       [
-        "#cbeaff",
-        1546,
-        1546,
-        "Lausanne"
-      ],
-      [
-        "#d9fff8",
-        1547,
-        1569,
-        "Basel"
+        "#ffffff",
+        1561,
+        1561,
+        "Zürich"
       ]
     ]
   },
@@ -1752,7 +1692,7 @@
     "start": 1538,
     "end": 1557,
     "location": "l28",
-    "starting_loc_x": 1,
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
@@ -1860,38 +1800,86 @@
     ]
   },
   {
-    "id": "p6831",
-    "name": "Johannes Travers d.Ä.",
-    "radius": 15,
-    "start": 1541,
-    "end": 1561,
-    "location": "l585",
-    "starting_loc_x": 2,
+    "id": "p1419",
+    "name": "Johannes Haab",
+    "radius": 11,
+    "start": 1533,
+    "end": 1556,
+    "location": "l414",
+    "starting_loc_x": 1,
     "starting_loc_y": 2,
     "colorSchedule": [
       [
-        "#ffd0e6",
-        1541,
-        1541,
-        "Zuoz"
+        "#ffdcd9",
+        1538,
+        1539,
+        "Rheineck"
       ],
       [
-        "#ffd0e6",
-        1542,
-        1542,
-        "Zuoz"
+        "#ffdcd9",
+        1540,
+        1545,
+        "Rheineck"
       ],
       [
-        "#ffd6e9",
-        1543,
-        1543,
-        "Chur"
+        "#e8fff6",
+        1546,
+        1546,
+        "Baden"
       ],
       [
-        "#ffd0e6",
-        1544,
-        1561,
-        "Zuoz"
+        "#e8fff6",
+        1547,
+        1547,
+        "Baden"
+      ],
+      [
+        "#d9fff8",
+        1548,
+        1548,
+        "Basel"
+      ],
+      [
+        "#d9fff8",
+        1549,
+        1553,
+        "Basel"
+      ],
+      [
+        "#e8fff6",
+        1554,
+        1556,
+        "Baden"
+      ]
+    ]
+  },
+  {
+    "id": "p477",
+    "name": "Hans Rudolf Bullinger (Sohn des Reformators)",
+    "radius": 40,
+    "start": 1551,
+    "end": 1575,
+    "location": "l473",
+    "starting_loc_x": 1,
+    "starting_loc_y": 2,
+    "colorSchedule": [
+      [
+        "#ffdfdc",
+        1551,
+        1551,
+        "St. Gallen"
+      ],
+      [
+        "#ffdfdc",
+        1552,
+        1559,
+        "St. Gallen"
+      ],
+      [
+        "#f8ffe8",
+        1560,
+        1575,
+        "Berg am Irchel"
       ]
     ]
   },
@@ -1899,7 +1887,7 @@
     "id": "p3988",
     "name": "Johannes Wolf",
     "radius": 13,
-    "start": 1540,
+    "start": 1538,
     "end": 1573,
     "location": "l311",
     "starting_loc_x": 0,
@@ -1932,48 +1920,6 @@
     ]
   },
   {
-    "id": "p1548",
-    "name": "Richard Hilles",
-    "radius": 14,
-    "start": 1541,
-    "end": 1572,
-    "location": "l491",
-    "starting_loc_x": 0,
-    "starting_loc_y": 1,
-    "colorSchedule": [
-      [
-        "#ceffd1",
-        1541,
-        1548,
-        "Straßburg"
-      ],
-      [
-        "#a0ffd7",
-        1549,
-        1562,
-        "London"
-      ],
-      [
-        "#a0ffd7",
-        1563,
-        1565,
-        "London"
-      ],
-      [
-        "#aeffc5",
-        1566,
-        1566,
-        "Antwerpen"
-      ],
-      [
-        "#a0ffd7",
-        1567,
-        1572,
-        "London"
-      ]
-    ]
-  },
-  {
     "id": "p8111",
     "name": "Peter Martyr Vermigli",
     "radius": 19,
@@ -1981,7 +1927,7 @@
     "end": 1562,
     "location": "l491",
     "starting_loc_x": 0,
-    "starting_loc_y": 1,
+    "starting_loc_y": 0,
     "colorSchedule": [
       [
         "#ceffd1",
@@ -2040,7 +1986,7 @@
     "start": 1543,
     "end": 1543,
     "location": "l49",
-    "starting_loc_x": 1,
+    "starting_loc_x": 2,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
@@ -2052,20 +1998,98 @@
     ]
   },
   {
-    "id": "p8467",
-    "name": "Johannes Wäber (Textor)",
-    "radius": 11,
+    "id": "p1453",
+    "name": "Wolfgang Haller",
+    "radius": 13,
     "start": 1544,
-    "end": 1547,
-    "location": "l41",
-    "starting_loc_x": 2,
+    "end": 1575,
+    "location": "l28",
+    "starting_loc_x": 0,
     "starting_loc_y": 0,
     "colorSchedule": [
       [
-        "#d6f1ff",
+        "#d9fff8",
         1544,
+        1544,
+        "Basel"
+      ],
+      [
+        "#d9fff8",
+        1545,
+        1545,
+        "Basel"
+      ],
+      [
+        "#f0ebff",
+        1546,
+        1546,
+        "Kappel am Albis"
+      ],
+      [
+        "#f0ebff",
         1547,
-        "Bern"
+        1549,
+        "Kappel am Albis"
+      ],
+      [
+        "#ffedfa",
+        1550,
+        1550,
+        "Meilen"
+      ],
+      [
+        "#ffedfa",
+        1551,
+        1557,
+        "Meilen"
+      ],
+      [
+        "#e8fff6",
+        1558,
+        1558,
+        "Baden"
+      ],
+      [
+        "#ffffff",
+        1559,
+        1559,
+        "Zürich"
+      ],
+      [
+        "#e8fff6",
+        1560,
+        1560,
+        "Baden"
+      ],
+      [
+        "#ffffff",
+        1561,
+        1571,
+        "Zürich"
+      ],
+      [
+        "#ffdfbb",
+        1572,
+        1572,
+        "Amberg"
+      ],
+      [
+        "#e8fff6",
+        1573,
+        1573,
+        "Baden"
+      ],
+      [
+        "#ffffff",
+        1574,
+        1574,
+        "Zürich"
+      ],
+      [
+        "#e8fff6",
+        1575,
+        1575,
+        "Baden"
       ]
     ]
   },
@@ -2084,6 +2108,138 @@
         1545,
         1567,
         "Chur"
+      ]
+    ]
+  },
+  {
+    "id": "p167",
+    "name": "Johann Jakob Ammann",
+    "radius": 10,
+    "start": 1531,
+    "end": 1553,
+    "location": "l587",
+    "starting_loc_x": 1,
+    "starting_loc_y": 1,
+    "colorSchedule": [
+      [
+        "#ffffff",
+        1545,
+        1553,
+        "Zürich"
+      ]
+    ]
+  },
+  {
+    "id": "p8009",
+    "name": "Johannes Fabricius Montanus (Schmid)",
+    "radius": 100,
+    "start": 1504,
+    "end": 1566,
+    "location": "l98",
+    "starting_loc_x": 2,
+    "starting_loc_y": 2,
+    "colorSchedule": [
+      [
+        "#ffd6e9",
+        1504,
+        1504,
+        "Chur"
+      ],
+      [
+        "#ffd6e9",
+        1505,
+        1544,
+        "Chur"
+      ],
+      [
+        "#e0ffb7",
+        1545,
+        1545,
+        "Marburg"
+      ],
+      [
+        "#e0ffb7",
+        1546,
+        1556,
+        "Marburg"
+      ],
+      [
+        "#ffd6e9",
+        1557,
+        1566,
+        "Chur"
+      ]
+    ]
+  },
+  {
+    "id": "p1884",
+    "name": "Ludwig Lavater (Schwiegersohn des Reformators)",
+    "radius": 14,
+    "start": 1546,
+    "end": 1575,
+    "location": "l491",
+    "starting_loc_x": 0,
+    "starting_loc_y": 0,
+    "colorSchedule": [
+      [
+        "#ceffd1",
+        1546,
+        1547,
+        "Straßburg"
+      ],
+      [
+        "#b0ffed",
+        1548,
+        1548,
+        "Paris"
+      ],
+      [
+        "#cbeaff",
+        1549,
+        1549,
+        "Lausanne"
+      ],
+      [
+        "#cbeaff",
+        1550,
+        1557,
+        "Lausanne"
+      ],
+      [
+        "#e8fff6",
+        1558,
+        1558,
+        "Baden"
+      ],
+      [
+        "#ffffff",
+        1559,
+        1563,
+        "Zürich"
+      ],
+      [
+        "#ffffff",
+        1564,
+        1564,
+        "Zürich"
+      ],
+      [
+        "#eeefff",
+        1565,
+        1565,
+        "Aeugst am Albis"
+      ],
+      [
+        "#eeefff",
+        1566,
+        1566,
+        "Aeugst am Albis"
+      ],
+      [
+        "#ffffff",
+        1567,
+        1575,
+        "Zürich"
       ]
     ]
   },
@@ -2109,7 +2265,7 @@
     "id": "p2336",
     "name": "Bernardino Ochino",
     "radius": 10,
-    "start": 1545,
+    "start": 1546,
     "end": 1562,
     "location": "l18",
     "starting_loc_x": 0,
@@ -2132,60 +2288,6 @@
         1562,
         1562,
         "Zürich"
-      ]
-    ]
-  },
-  {
-    "id": "p8061",
-    "name": "Jan Utenhove d.Ä.",
-    "radius": 14,
-    "start": 1549,
-    "end": 1561,
-    "location": "l296",
-    "starting_loc_x": 0,
-    "starting_loc_y": 0,
-    "colorSchedule": [
-      [
-        "#a0ffd7",
-        1549,
-        1553,
-        "London"
-      ],
-      [
-        "#bfffa5",
-        1554,
-        1554,
-        "Emden"
-      ],
-      [
-        "#bfffa5",
-        1555,
-        1555,
-        "Emden"
-      ],
-      [
-        "#bfffa4",
-        1556,
-        1556,
-        "Norden"
-      ],
-      [
-        "#ffb19b",
-        1557,
-        1558,
-        "Krakau"
-      ],
-      [
-        "#e1ffbe",
-        1559,
-        1559,
-        "Frankfurt am Main"
-      ],
-      [
-        "#a0ffd7",
-        1560,
-        1561,
-        "London"
       ]
     ]
   },
@@ -2220,6 +2322,78 @@
     ]
   },
   {
+    "id": "p8442",
+    "name": "Josias Simler (Simmler)",
+    "radius": 14,
+    "start": 1546,
+    "end": 1575,
+    "location": "l28",
+    "starting_loc_x": 0,
+    "starting_loc_y": 0,
+    "colorSchedule": [
+      [
+        "#d9fff8",
+        1546,
+        1547,
+        "Basel"
+      ],
+      [
+        "#d9fff8",
+        1548,
+        1552,
+        "Basel"
+      ],
+      [
+        "#ffffff",
+        1553,
+        1553,
+        "Zürich"
+      ],
+      [
+        "#ffffff",
+        1554,
+        1554,
+        "Zürich"
+      ],
+      [
+        "#f0ebff",
+        1555,
+        1555,
+        "Kappel am Albis"
+      ],
+      [
+        "#f0ebff",
+        1556,
+        1560,
+        "Kappel am Albis"
+      ],
+      [
+        "#ffffff",
+        1561,
+        1568,
+        "Zürich"
+      ],
+      [
+        "#ffeee7",
+        1569,
+        1569,
+        "Girenbad"
+      ],
+      [
+        "#ffeee7",
+        1570,
+        1570,
+        "Girenbad"
+      ],
+      [
+        "#ffffff",
+        1571,
+        1575,
+        "Zürich"
+      ]
+    ]
+  },
+  {
     "id": "p3196",
     "name": "Hans Tscharner (Bürgermeister von Chur)",
     "radius": 10,
@@ -2234,6 +2408,24 @@
         1547,
         1566,
         "Chur"
+      ]
+    ]
+  },
+  {
+    "id": "p2757",
+    "name": "Jakob Rüeger",
+    "radius": 18,
+    "start": 1548,
+    "end": 1569,
+    "location": "l441",
+    "starting_loc_x": 0,
+    "starting_loc_y": 1,
+    "colorSchedule": [
+      [
+        "#f8ffe3",
+        1548,
+        1569,
+        "Schaffhausen"
       ]
     ]
   },
@@ -2282,96 +2474,6 @@
         1571,
         1571,
         "Frankreich"
-      ]
-    ]
-  },
-  {
-    "id": "p974",
-    "name": "Charles du Moulin",
-    "radius": 12,
-    "start": 1552,
-    "end": 1567,
-    "location": "l167",
-    "starting_loc_x": 2,
-    "starting_loc_y": 0,
-    "colorSchedule": [
-      [
-        "#c5e6ff",
-        1552,
-        1552,
-        "Genf"
-      ],
-      [
-        "#faffd0",
-        1553,
-        1554,
-        "Tübingen"
-      ],
-      [
-        "#d0fffb",
-        1555,
-        1555,
-        "Montbéliard (Mömpelgard)"
-      ],
-      [
-        "#d0fffb",
-        1556,
-        1566,
-        "Montbéliard (Mömpelgard)"
-      ],
-      [
-        "#ceffd1",
-        1567,
-        1567,
-        "Straßburg"
-      ]
-    ]
-  },
-  {
-    "id": "p4037",
-    "name": "Girolamo Zanchi",
-    "radius": 20,
-    "start": 1552,
-    "end": 1574,
-    "location": "l491",
-    "starting_loc_x": 0,
-    "starting_loc_y": 1,
-    "colorSchedule": [
-      [
-        "#ceffd1",
-        1553,
-        1563,
-        "Straßburg"
-      ],
-      [
-        "#ffd0f8",
-        1564,
-        1567,
-        "Chiavenna"
-      ],
-      [
-        "#e6ffc5",
-        1568,
-        1574,
-        "Heidelberg"
-      ]
-    ]
-  },
-  {
-    "id": "p2856",
-    "name": "Gereon Sailer",
-    "radius": 16,
-    "start": 1554,
-    "end": 1562,
-    "location": "l18",
-    "starting_loc_x": 0,
-    "starting_loc_y": 2,
-    "colorSchedule": [
-      [
-        "#ffddc7",
-        1554,
-        1562,
-        "Augsburg"
       ]
     ]
   },
@@ -2526,42 +2628,6 @@
     ]
   },
   {
-    "id": "p629",
-    "name": "Matthieu Coignet d.Ä.",
-    "radius": 24,
-    "start": 1557,
-    "end": 1572,
-    "location": "l91",
-    "starting_loc_x": 2,
-    "starting_loc_y": 0,
-    "colorSchedule": [
-      [
-        "#c0dbff",
-        1557,
-        1557,
-        "Chambéry"
-      ],
-      [
-        "#d9faff",
-        1558,
-        1563,
-        "Solothurn"
-      ],
-      [
-        "#d9faff",
-        1564,
-        1564,
-        "Solothurn"
-      ],
-      [
-        "#b0ffed",
-        1565,
-        1572,
-        "Paris"
-      ]
-    ]
-  },
-  {
     "id": "p8016",
     "name": "Tobias Egli (Iconius, Götz)",
     "radius": 65,
@@ -2606,6 +2672,24 @@
         1567,
         1574,
         "Chur"
+      ]
+    ]
+  },
+  {
+    "id": "p7228",
+    "name": "Huldrych Zwingli d.J.",
+    "radius": 10,
+    "start": 1548,
+    "end": 1561,
+    "location": "l587",
+    "starting_loc_x": 1,
+    "starting_loc_y": 1,
+    "colorSchedule": [
+      [
+        "#ffffff",
+        1561,
+        1561,
+        "Zürich"
       ]
     ]
   },
@@ -2694,53 +2778,11 @@
     ]
   },
   {
-    "id": "p6077",
-    "name": "Hans Peyer",
-    "radius": 10,
-    "start": 1572,
-    "end": 1572
-  },
-  {
-    "id": "p4321",
-    "name": "Katharina Blarer (geb. Ryff)",
-    "radius": 10,
-    "start": 1533,
-    "end": 1547
-  },
-  {
-    "id": "p20082",
-    "name": "Susanne Bullinger (geb. Keller vom Steinbock)",
-    "radius": 10,
-    "start": 1566,
-    "end": 1573
-  },
-  {
     "id": "p4440",
     "name": "Guillaume Budé",
     "radius": 10,
     "start": 1554,
-    "end": 1565
-  },
-  {
-    "id": "p4868",
-    "name": "Jakob Funcklin",
-    "radius": 10,
-    "start": 1545,
-    "end": 1558
-  },
-  {
-    "id": "p21017",
-    "name": "Hieronymus Manuel",
-    "radius": 10,
-    "start": 1566,
-    "end": 1575
-  },
-  {
-    "id": "p7449",
-    "name": "Hans Rudolf von Diesbach",
-    "radius": 10,
-    "start": 1563,
-    "end": 1574
+    "end": 1563
   },
   {
     "id": "p20473",
@@ -2750,25 +2792,60 @@
     "end": 1570
   },
   {
-    "id": "p7511",
-    "name": "Niklaus von Graffenried",
+    "id": "p5612",
+    "name": "Elisabeth geb. Lavater (Enkelin des Reformators)",
     "radius": 10,
-    "start": 1562,
+    "start": 1566,
+    "end": 1572
+  },
+  {
+    "id": "p5034",
+    "name": "Dorothea Stockar (geb. Bullinger, Tochter des Reformators)",
+    "radius": 10,
+    "start": 1554,
+    "end": 1574
+  },
+  {
+    "id": "p20082",
+    "name": "Susanne Bullinger (geb. Keller vom Steinbock)",
+    "radius": 10,
+    "start": 1566,
     "end": 1573
   },
   {
-    "id": "p7042",
-    "name": "Anna Bullinger (geb. Wiederkehr)",
+    "id": "p6077",
+    "name": "Hans Peyer",
     "radius": 10,
-    "start": 1538,
-    "end": 1541
+    "start": 1572,
+    "end": 1572
   },
   {
-    "id": "p20518",
-    "name": "Johannes Rudolf Hagenberg",
+    "id": "p21017",
+    "name": "Hieronymus Manuel",
     "radius": 10,
-    "start": 1570,
+    "start": 1566,
     "end": 1575
+  },
+  {
+    "id": "p4321",
+    "name": "Katharina Blarer (geb. Ryff)",
+    "radius": 10,
+    "start": 1533,
+    "end": 1547
+  },
+  {
+    "id": "p7449",
+    "name": "Hans Rudolf von Diesbach",
+    "radius": 10,
+    "start": 1563,
+    "end": 1574
+  },
+  {
+    "id": "p4554",
+    "name": "Rodolphus Collinus (Ambühl)",
+    "radius": 10,
+    "start": 1531,
+    "end": 1566
   },
   {
     "id": "p4334",
@@ -2778,10 +2855,45 @@
     "end": 1548
   },
   {
-    "id": "p5612",
-    "name": "Elisabeth geb. Lavater (Enkelin des Reformators)",
+    "id": "p7511",
+    "name": "Niklaus von Graffenried",
     "radius": 10,
-    "start": 1566,
-    "end": 1572
+    "start": 1562,
+    "end": 1573
+  },
+  {
+    "id": "p4868",
+    "name": "Jakob Funcklin",
+    "radius": 10,
+    "start": 1545,
+    "end": 1558
+  },
+  {
+    "id": "p20518",
+    "name": "Johannes Rudolf Hagenberg",
+    "radius": 10,
+    "start": 1570,
+    "end": 1575
+  },
+  {
+    "id": "p5935",
+    "name": "Kaspar Nasal",
+    "radius": 10,
+    "start": 1532,
+    "end": 1542
+  },
+  {
+    "id": "p7042",
+    "name": "Anna Bullinger (geb. Wiederkehr)",
+    "radius": 10,
+    "start": 1532,
+    "end": 1541
+  },
+  {
+    "id": "p5035",
+    "name": "Veritas Großmann (geb. Bullinger)",
+    "radius": 10,
+    "start": 1550,
+    "end": 1574
   }
 ]
