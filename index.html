@@ -28,14 +28,14 @@
       #dynamic-graph-container {
         background-color: rgb(36, 41, 41);
         flex: 1;
+        position: relative; /* helps tooltip positioning */
       }
-      /* Style links with a custom color */
+      /* keep only opacity here; color comes from D3 */
       #dynamic-graph-container svg line {
-        stroke: #e3ebef;
         stroke-opacity: 0.8;
       }
     </style>
-    <script type="module" crossorigin src="/dynamic-graph/assets/index-CV7azyxi.js"></script>
+    <script type="module" crossorigin src="/dynamic-graph/assets/index-cURyyMK5.js"></script>
   </head>
   <body>
     <div id="controls">
@@ -49,7 +49,6 @@
         value="1520"
       />
 
-
       <label for="topn-slider">Top N: <span id="topn-value">All</span></label>
       <input
         type="range"
@@ -59,9 +58,19 @@
         step="5"
         value="50"
       />
+
+      <button id="play-toggle" type="button">▶ Play</button>
+      <style>
+        #play-toggle { padding: 6px 10px; cursor: pointer; }
+      </style>
+
+      <label style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="correspondence-toggle" checked />
+        Correspondence links
+      </label>
     </div>
+
     <div id="dynamic-graph-container"></div>
 
-
   </body>
 </html>
