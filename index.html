@@ -45,8 +45,9 @@
         min="1520"
         max="1575"
         step="1"
-        value="0"
+        value="1520"
       />
+
 
       <label for="topn-slider">Top N: <span id="topn-value">All</span></label>
       <input
@@ -63,10 +64,15 @@
     <script type="module">
       import * as d3 from "d3";
       import DynamicGraph from "./src/d3-dynamic-graph";
-      import nodesData from "./person_nodes.json" assert { type: "json" };
-      import linksData from "./yearly_links.json" assert { type: "json" };
 
-      // Data with many nodes and time ranges
+      const BASE = import.meta.env.BASE_URL; // "/" in dev, "/dynamic-graph/" on GH Pages
+
+      const [nodesData, linksData] = await Promise.all([
+        fetch(`${BASE}person_nodes.json`).then(r => r.json()),
+        fetch(`${BASE}yearly_links.json`).then(r => r.json()),
+      ]);
+
+      // ✅ define what the rest of your code uses
       const nodes = nodesData;
       const links = linksData;
 
@@ -77,19 +83,9 @@
         return { width, height };
       }
 
-      // Create graph with dynamic size
       let { width, height } = getSize();
       const vis = DynamicGraph(container, d3, { width, height })
-        .nodeRadius((d) => d.radius)
-        //.tooltipInnerHTML((d) => d.name);
-
-      // Re-render on resize
-      window.addEventListener("resize", () => {
-        const size = getSize();
-        //vis.resize(size.width, size.height);
-        // reapply current filter
-        filterByTime(+slider.property("value"));
-      });
+        .nodeRadius((d) => d.radius);
 
       function getNodeColorAtTime(node, t) {
         if (Array.isArray(node.colorSchedule)) {
@@ -98,24 +94,21 @@
           );
           return entry ? entry[0] : null;
         }
-        return node.color; // fallback if no schedule
+        return node.color;
       }
 
-      // Time filter logic
       function filterByTime(t, topN = null) {
-        vis.pubVar({ year: t });  // ← update DynamicGraph with current slider value
+        vis.pubVar({ year: t });
 
         let filteredNodes = nodes.filter((n) => n.start <= t && n.end >= t);
 
         if (topN !== null && topN > 0 && topN < filteredNodes.length) {
-          // Sort descending by radius and take top N
           filteredNodes = filteredNodes
             .slice()
             .sort((a, b) => b.radius - a.radius)
             .slice(0, topN);
         }
 
-        // Assign dynamic color
         filteredNodes.forEach((node) => {
           node.color = getNodeColorAtTime(node, t);
         });
@@ -123,9 +116,7 @@
         const activeIds = new Set(filteredNodes.map((n) => n.id));
         const activeLinks = links
           .filter((l) => l.start <= t && l.end >= t)
-          .filter(
-            (l) => activeIds.has(l.sourceId) && activeIds.has(l.targetId)
-          );
+          .filter((l) => activeIds.has(l.sourceId) && activeIds.has(l.targetId));
 
         vis.updateVis(filteredNodes, activeLinks);
       }
@@ -148,9 +139,14 @@
       timeSlider.on("input", updateFromSliders);
       topnSlider.on("input", updateFromSliders);
 
-      // Initial render
-      timeLabel.text(timeSlider.property("value"));
-      filterByTime(+timeSlider.property("value"));
-    </script>
+      // ✅ fix resize handler: use timeSlider, not slider
+      window.addEventListener("resize", () => {
+        filterByTime(+timeSlider.property("value"), +topnSlider.property("value"));
+      });
+
+      // ✅ initial render (assumes your HTML slider default is sane)
+      updateFromSliders();
+</script>
+
   </body>
 </html>
