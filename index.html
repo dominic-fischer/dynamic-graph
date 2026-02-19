@@ -28,10 +28,10 @@
       #dynamic-graph-container {
         background-color: rgb(36, 41, 41);
         flex: 1;
+        position: relative; /* helps tooltip positioning */
       }
-      /* Style links with a custom color */
+      /* keep only opacity here; color comes from D3 */
       #dynamic-graph-container svg line {
-        stroke: #e3ebef;
         stroke-opacity: 0.8;
       }
     </style>
@@ -48,7 +48,6 @@
         value="1520"
       />
 
-
       <label for="topn-slider">Top N: <span id="topn-value">All</span></label>
       <input
         type="range"
@@ -58,7 +57,18 @@
         step="5"
         value="50"
       />
+
+      <button id="play-toggle" type="button">▶ Play</button>
+      <style>
+        #play-toggle { padding: 6px 10px; cursor: pointer; }
+      </style>
+
+      <label style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="correspondence-toggle" checked />
+        Correspondence links
+      </label>
     </div>
+
     <div id="dynamic-graph-container"></div>
 
     <script type="module">
@@ -67,25 +77,40 @@
 
       const BASE = import.meta.env.BASE_URL; // "/" in dev, "/dynamic-graph/" on GH Pages
 
-      const [nodesData, linksData] = await Promise.all([
-        fetch(`${BASE}person_nodes.json`).then(r => r.json()),
-        fetch(`${BASE}yearly_links.json`).then(r => r.json()),
+      const [nodesData, linksData, correspondenceData] = await Promise.all([
+        fetch(`${BASE}person_nodes.json`).then((r) => r.json()),
+        fetch(`${BASE}yearly_links.json`).then((r) => r.json()),
+        fetch(`${BASE}yearly_correspondence_links.json`).then((r) => r.json()),
       ]);
 
-      // ✅ define what the rest of your code uses
       const nodes = nodesData;
-      const links = linksData;
+      const links = linksData.map((l) => ({ ...l, linkType: "normal" }));
+      const correspondenceLinks = correspondenceData.map((l) => ({
+        ...l,
+        linkType: "correspondence",
+      }));
 
       // Select container and measure bounds
       const container = d3.select("#dynamic-graph-container");
+      const controlsEl = document.getElementById("controls");
+
       function getSize() {
         const { width, height } = container.node().getBoundingClientRect();
         return { width, height };
       }
+      function getTopOffset() {
+        // height of the slider/toggle bar (the region nodes/labels must not enter)
+        return controlsEl.getBoundingClientRect().height;
+      }
 
       let { width, height } = getSize();
-      const vis = DynamicGraph(container, d3, { width, height })
-        .nodeRadius((d) => d.radius);
+
+      // pass topOffset so the simulation can keep nodes/labels out from under the controls
+      const vis = DynamicGraph(container, d3, {
+        width,
+        height,
+        topOffset: getTopOffset(),
+      }).nodeRadius((d) => d.radius);
 
       function getNodeColorAtTime(node, t) {
         if (Array.isArray(node.colorSchedule)) {
@@ -97,8 +122,15 @@
         return node.color;
       }
 
+      function filterLinks(linkArray, activeIds, t) {
+        return linkArray
+          .filter((l) => l.start <= t && l.end >= t)
+          .filter((l) => activeIds.has(l.sourceId) && activeIds.has(l.targetId));
+      }
+
       function filterByTime(t, topN = null) {
-        vis.pubVar({ year: t });
+        // keep topOffset up-to-date (e.g., if controls wrap to 2 lines)
+        vis.pubVar({ year: t, topOffset: getTopOffset() });
 
         let filteredNodes = nodes.filter((n) => n.start <= t && n.end >= t);
 
@@ -114,9 +146,12 @@
         });
 
         const activeIds = new Set(filteredNodes.map((n) => n.id));
-        const activeLinks = links
-          .filter((l) => l.start <= t && l.end >= t)
-          .filter((l) => activeIds.has(l.sourceId) && activeIds.has(l.targetId));
+        const includeCorr = corrToggle.property("checked");
+
+        const activeLinks = [
+          ...filterLinks(links, activeIds, t),
+          ...(includeCorr ? filterLinks(correspondenceLinks, activeIds, t) : []),
+        ];
 
         vis.updateVis(filteredNodes, activeLinks);
       }
@@ -124,7 +159,7 @@
       // Slider
       const timeSlider = d3.select("#time-slider");
       const timeLabel = d3.select("#time-value");
-
+      const corrToggle = d3.select("#correspondence-toggle");
       const topnSlider = d3.select("#topn-slider");
       const topnLabel = d3.select("#topn-value");
 
@@ -138,15 +173,62 @@
 
       timeSlider.on("input", updateFromSliders);
       topnSlider.on("input", updateFromSliders);
+      corrToggle.on("change", updateFromSliders);
 
-      // ✅ fix resize handler: use timeSlider, not slider
+      // --- Play / Pause ---
+      const playBtn = document.getElementById("play-toggle");
+
+      let isPlaying = false;
+      let playTimer = null;
+
+      // tune these:
+      const PLAY_INTERVAL_MS = 3000; // how fast it steps (lower = faster)
+      const PLAY_STEP = 1;          // years per step
+
+      function setPlaying(next) {
+        isPlaying = next;
+
+        if (playTimer) {
+          clearInterval(playTimer);
+          playTimer = null;
+        }
+
+        playBtn.textContent = isPlaying ? "⏸ Pause" : "▶ Play";
+
+        if (!isPlaying) return;
+
+        playTimer = setInterval(() => {
+          const min = +timeSlider.attr("min");
+          const max = +timeSlider.attr("max");
+          let t = +timeSlider.property("value");
+
+          t += PLAY_STEP;
+
+          // loop back to start when reaching the end
+          if (t > max) t = min;
+
+          timeSlider.property("value", t);
+          updateFromSliders();
+        }, PLAY_INTERVAL_MS);
+      }
+
+      playBtn.addEventListener("click", () => setPlaying(!isPlaying));
+
+      // (nice UX) if the user manually drags the slider, pause playback
+      timeSlider.on("input", () => {
+        if (isPlaying) setPlaying(false);
+        updateFromSliders();
+      });
+
       window.addEventListener("resize", () => {
+        // update dimensions & topOffset on resize
+        const size = getSize();
+        vis.pubVar({ width: size.width, height: size.height, topOffset: getTopOffset() });
         filterByTime(+timeSlider.property("value"), +topnSlider.property("value"));
       });
 
-      // ✅ initial render (assumes your HTML slider default is sane)
+      // initial render
       updateFromSliders();
-</script>
-
+    </script>
   </body>
 </html>

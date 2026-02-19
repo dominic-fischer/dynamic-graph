@@ -4,10 +4,11 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
   // 1. GLOBAL VARIALBES -------------------------------------------------------------------------
   // Public variables width default settings
   let pubVar = {
+    topOffset: 0,
     width: window.innerWidth, // pixles
     height: window.innerHeight, // pixles
     transitionTime: 10, // milliseconds
-    centeringForce: 0.04,
+    centeringForce: 0.1,
     // e.g. Nodes: [{id: "foo"}, {id: "bar"}] Links: [{source: "foo", target: "bar"}]
     nodeRefProp: "id",
     unfocusOpacity: 0.6,
@@ -223,7 +224,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
       })
       .attr("cy", (d) => {
         const r = pubVar.nodeRadius(d);
-        const y = Math.max(r, Math.min(pubVar.width - r, d.y));
+        const y = Math.max(pubVar.topOffset + r, Math.min(pubVar.height - r, d.y));
         d.y = y;
         return y;
       })
@@ -244,9 +245,10 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
         .forceSimulation()
         .force(
           "link",
-          d3.forceLink().id((node) => node[pubVar.nodeRefProp])
-          .distance(35)     // rest length = 100px
-          .strength(0.1)
+          d3.forceLink()
+            .id((node) => node[pubVar.nodeRefProp])
+            .distance((l) => (l.linkType === "correspondence" ? 160 : 35))
+            .strength((l) => (l.linkType === "correspondence" ? 0.005 : 0.2))
         )
         .force("charge", d3.forceManyBody().strength(-800))
         .force("x", d3.forceX(pubVar.width / 2).strength(pubVar.centeringForce))
@@ -264,10 +266,10 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
               d.vy = 0;
             }
             // top
-            if (d.y < r) {
-              d.y  = r;
-              d.vy = 0;
-            }
+            if (d.y < pubVar.topOffset + r) {
+            d.y  = pubVar.topOffset + r;
+            d.vy = 0;
+          }
             // (and similarly for x)
           }
         })
@@ -294,7 +296,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     // supply d.sourceId + '-' + d.targetId as the key:
     link = link.data(
       links,
-      d => d.sourceId + "-" + d.targetId
+      d => `${d.sourceId}-${d.targetId}-${d.linkType}`
     );
 
     // EXIT old links
@@ -310,7 +312,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
         .attr("class", d =>
           `link link-${d.sourceId} link-${d.targetId}`
         )
-        .attr("stroke", pubVar.linkColor)
+        .attr("stroke", d => d.linkType === "correspondence" ? "#000000" : pubVar.linkColor(d))
         .attr("stroke-width", (d) => d.thickness || pubVar.unfocusStrokeThickness)
         .attr("stroke-opacity", pubVar.unfocusOpacity);
 
@@ -324,6 +326,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     // MERGE for the simulation
     link = linkEnter
       .merge(link)
+      .attr("stroke", d => d.linkType === "correspondence" ? "#000000" : pubVar.linkColor(d))
       .attr("stroke-width", (d) => d.thickness || pubVar.unfocusStrokeThickness)
       .style("opacity", pubVar.unfocusOpacity); // Reset to dimmed on every update
 
@@ -475,7 +478,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     simulation.force("link").links(links);
     // Start simulation at alpha = 0.3
     let startAlpha = 0.00001;
-    let targetAlpha = 0.6;
+    let targetAlpha = 0.4;
     let duration = 2000; // in ms
 
     // Set initial alpha
@@ -499,7 +502,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
       }
       });
 
-    simulation.velocityDecay(0.4);
+    simulation.velocityDecay(0.7);
 
   }
 
