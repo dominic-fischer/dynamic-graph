@@ -248,11 +248,7 @@
         </style>
 
         <div id="geo-map-container">
-          <iframe
-            id="geo-map"
-            src="place_colour_osm_map_nocluster.html"
-            loading="lazy"
-          ></iframe>
+          <iframe id="geo-map" loading="lazy"></iframe>
         </div>
 
         <h3>Edges</h3>
@@ -291,6 +287,8 @@
       import DynamicGraph from "./src/d3-dynamic-graph";
 
       const BASE = import.meta.env.BASE_URL; // "/" in dev, "/dynamic-graph/" on GH Pages
+      const frame = document.getElementById("geo-map");
+        if (frame) frame.src = BASE + "place_colour_osm_map_nocluster.html";
 
       const [nodesData, linksData, correspondenceData, personInfo] = await Promise.all([
         fetch(`${BASE}person_nodes.json`).then((r) => r.json()),
