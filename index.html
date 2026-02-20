@@ -540,6 +540,15 @@
 
       // initial render
       updateFromSliders();
+
+      // --- open help on first visit ---
+      requestAnimationFrame(() => {
+        helpOverlay.classList.add("open");
+
+        // make sure the map renders correctly once visible
+        const frame = document.getElementById("geo-map");
+        frame?.contentWindow?.postMessage("resize-map", "*");
+      });
     </script>
   </body>
 </html>
