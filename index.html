@@ -61,6 +61,92 @@
       <button id="play-toggle" type="button">▶ Play</button>
       <style>
         #play-toggle { padding: 6px 10px; cursor: pointer; }
+
+        :root {
+          --controls-h: 0px;
+          --sidebar-w: 340px;
+        }
+
+        /* Overlay panel */
+        #sidebar {
+          position: fixed;
+          left: 0;
+          top: var(--controls-h);          /* starts below the sliders */
+          width: var(--sidebar-w);
+          height: calc(100vh - var(--controls-h));
+
+          background: rgba(15, 15, 18, 0.96);
+          backdrop-filter: blur(6px);
+
+          color: #eee;
+          border-right: 1px solid rgba(255,255,255,0.12);
+          overflow: auto;
+
+          transform: translateX(-105%);
+          transition: transform 240ms cubic-bezier(.2,.8,.2,1);
+
+          z-index: 50;                     /* above SVG */
+          padding: 14px 14px 20px;
+          box-sizing: border-box;
+
+          box-shadow: 6px 0 30px rgba(0,0,0,.45);
+        }
+
+        #sidebar.open {
+          transform: translateX(0);
+        }
+
+
+        #sidebar-close {
+          position: sticky;
+          top: 0;
+          float: right;
+          margin: 0 0 8px 8px;
+          padding: 6px 10px;
+          cursor: pointer;
+        }
+
+        #sidebar-content h2 {
+          margin: 0 0 6px;
+          font-size: 18px;
+        }
+
+        #sidebar-content .meta {
+          opacity: 0.85;
+          font-size: 13px;
+          margin-bottom: 10px;
+        }
+
+        #sidebar-content img.thumb {
+          display: block;
+          width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin: 10px 0;
+        }
+
+        #sidebar-content a {
+          color: #8ab4ff;
+          text-decoration: none;
+        }
+        #sidebar-content a:hover {
+          text-decoration: underline;
+        }
+
+        #sidebar-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,.35);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 200ms ease;
+          z-index: 40;
+        }
+
+        #sidebar.open + #sidebar-backdrop {
+          opacity: 1;
+          pointer-events: auto;
+        }
       </style>
 
       <label style="display:flex; align-items:center; gap:6px;">
@@ -68,6 +154,12 @@
         Correspondence links
       </label>
     </div>
+
+    <div id="sidebar" aria-hidden="true">
+      <button id="sidebar-close" type="button" title="Close">✕</button>
+      <div id="sidebar-content"></div>
+    </div>
+    <div id="sidebar-backdrop"></div>
 
     <div id="dynamic-graph-container"></div>
 
@@ -77,10 +169,11 @@
 
       const BASE = import.meta.env.BASE_URL; // "/" in dev, "/dynamic-graph/" on GH Pages
 
-      const [nodesData, linksData, correspondenceData] = await Promise.all([
+      const [nodesData, linksData, correspondenceData, personInfo] = await Promise.all([
         fetch(`${BASE}person_nodes.json`).then((r) => r.json()),
         fetch(`${BASE}yearly_links.json`).then((r) => r.json()),
         fetch(`${BASE}yearly_correspondence_links.json`).then((r) => r.json()),
+        fetch(`${BASE}person_gnd_wiki.json`).then((r) => r.json()), // <-- rename to your actual file
       ]);
 
       const nodes = nodesData;
@@ -93,6 +186,70 @@
       // Select container and measure bounds
       const container = d3.select("#dynamic-graph-container");
       const controlsEl = document.getElementById("controls");
+
+      const sidebarEl = document.getElementById("sidebar");
+      const sidebarContentEl = document.getElementById("sidebar-content");
+      const sidebarCloseBtn = document.getElementById("sidebar-close");
+
+      sidebarEl.addEventListener("pointerdown", e => e.stopPropagation());
+      sidebarEl.addEventListener("click", e => e.stopPropagation());
+      document.getElementById("sidebar-backdrop")
+        .addEventListener("click", closeSidebar);
+
+      function setControlsHeightVar() {
+        const h = getTopOffset();
+        document.documentElement.style.setProperty("--controls-h", `${h}px`);
+      }
+
+      function openSidebarForNode(node) {
+        // Your nodes seem to have ids like "P1". Use node.id as key.
+        const info = personInfo?.[node.id] || null;
+
+        const wiki = info?.wiki || null;
+        const gnd = info?.gnd || null;
+
+        const ws = info?.wiki_summary || null;
+        const title = ws?.title || node.name || node.id;
+        const desc = ws?.description || "";
+        const summary = ws?.summary || "";
+        const thumb = ws?.thumbnail || null;
+
+        sidebarContentEl.innerHTML = `
+          <h2>${escapeHtml(title)}</h2>
+          ${desc ? `<div class="meta">${escapeHtml(desc)}</div>` : ""}
+          ${thumb ? `<img class="thumb" src="${thumb}" alt="${escapeHtml(title)}" />` : ""}
+          ${summary ? `<p>${escapeHtml(summary)}</p>` : `<p><em>No wiki summary available.</em></p>`}
+
+          <hr style="border:0;border-top:1px solid rgba(255,255,255,0.12);margin:12px 0" />
+
+          <div>
+            ${wiki ? `<div>Wiki: <a href="${wiki}" target="_blank" rel="noopener">open</a></div>` : `<div>Wiki: <em>none</em></div>`}
+            ${gnd ? `<div>GND: <a href="${gnd}" target="_blank" rel="noopener">open</a></div>` : `<div>GND: <em>none</em></div>`}
+          </div>
+        `;
+
+        sidebarEl.classList.add("open");
+        sidebarEl.setAttribute("aria-hidden", "false");
+      }
+
+      function closeSidebar() {
+        sidebarEl.classList.remove("open");
+        sidebarEl.setAttribute("aria-hidden", "true");
+      }
+
+      sidebarCloseBtn.addEventListener("click", closeSidebar);
+
+      // Minimal escaping for injected HTML
+      function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, (m) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        }[m]));
+      }
+
 
       function getSize() {
         const { width, height } = container.node().getBoundingClientRect();
@@ -110,6 +267,8 @@
         width,
         height,
         topOffset: getTopOffset(),
+        onNodeClick: (node) => openSidebarForNode(node),
+        onBackgroundClick: () => closeSidebar(), // only if you added svg.on("click"...)
       }).nodeRadius((d) => d.radius);
 
       function getNodeColorAtTime(node, t) {
@@ -220,8 +379,10 @@
         updateFromSliders();
       });
 
+      setControlsHeightVar();
+
       window.addEventListener("resize", () => {
-        // update dimensions & topOffset on resize
+        setControlsHeightVar();
         const size = getSize();
         vis.pubVar({ width: size.width, height: size.height, topOffset: getTopOffset() });
         filterByTime(+timeSlider.property("value"), +topnSlider.property("value"));

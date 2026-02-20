@@ -50,6 +50,10 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     .attr("width", pubVar.width)
     .attr("height", pubVar.height)
     .style("display", "block");
+  
+  svg.on("click", () => {
+    if (typeof pubVar.onBackgroundClick === "function") pubVar.onBackgroundClick();
+  });
 
   // FOCUS NODE: TOOLTIP AND NEIGHBOR HIGHLIGHT -------------------------------------------------------------------------
   const tooltip = d3SelectedVisContainer
@@ -413,6 +417,13 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
           removeNodeTooltip(event, node);
           changeNodeFocus(node, links, false);
         }
+      })
+      .on("click", (event, node) => {
+        // Important: do NOT set node.clicked (per your requirement)
+        if (typeof pubVar.onNodeClick === "function") {
+          pubVar.onNodeClick(node, event);
+        }
+        event.stopPropagation();
       })
       /*
       .on("click", (event, node) => {
