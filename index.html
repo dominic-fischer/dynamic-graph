@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>D3 Time-Filtered Dynamic Graph</title>
+    <!-- modern browsers -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <!-- fallback -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <!-- Windows -->
+    <meta name="theme-color" content="#242929">
     <style>
       body {
         margin: 0;
@@ -34,6 +45,40 @@
       #dynamic-graph-container svg line {
         stroke-opacity: 0.8;
       }
+
+      #help-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+      }
+
+      #help-overlay.open {
+        display: flex;
+      }
+
+      #help-modal {
+        background: #111;
+        color: #eee;
+        width: min(720px, 92vw);
+        max-height: 85vh;
+        overflow: auto;
+        padding: 24px 26px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,.6);
+      }
+
+      #help-modal h2 { margin-top: 0; }
+
+      #help-close {
+        float: right;
+        cursor: pointer;
+        font-size: 18px;
+        margin-left: 12px;
+      }
     </style>
   </head>
   <body>
@@ -59,6 +104,7 @@
       />
 
       <button id="play-toggle" type="button">▶ Play</button>
+
       <style>
         #play-toggle { padding: 6px 10px; cursor: pointer; }
 
@@ -147,12 +193,19 @@
           opacity: 1;
           pointer-events: auto;
         }
+
+        #help-toggle {
+          padding: 6px 10px;
+          cursor: pointer;
+        }
       </style>
 
       <label style="display:flex; align-items:center; gap:6px;">
         <input type="checkbox" id="correspondence-toggle" checked />
         Correspondence links
       </label>
+
+      <button id="help-toggle" title="About this visualization">❓</button>
     </div>
 
     <div id="sidebar" aria-hidden="true">
@@ -160,6 +213,76 @@
       <div id="sidebar-content"></div>
     </div>
     <div id="sidebar-backdrop"></div>
+
+    <div id="help-overlay">
+      <div id="help-modal">
+        <button id="help-close">✕</button>
+
+        <h2>About this visualization</h2>
+
+        <h3>Nodes</h3>
+        <p>Each circle represents a person, whereby size indicates importance based on correspondence volume in the Bullinger Corpus. It is proportional to the number of letters sent and received. Note that the maximum size is clamped to the second largest node, as Bullinger himself is an outlier in correspondence volume.</p>
+        <h3>Geographic colour mapping</h3>
+        <p>Color indicates the main location in a year, i.e., where the most correspondence was exchanged. A place's colours are based on its coordinates, whereby:</p>
+        <ul>
+          <li>Direction from Zürich → hue (color family)</li>
+          <li>Distance from Zürich → saturation (strength of color)</li>
+        </ul>
+        <p>
+        The colour-coded locations are shown on the map below:
+        </p>
+
+        <style>
+          #geo-map-container {
+            width: 100%;
+            height: min(70vh, 800px); /* responsive height */
+            aspect-ratio: 16 / 9;     /* optional but nice */
+          }
+
+          #geo-map {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border: none;
+          }
+        </style>
+
+        <div id="geo-map-container">
+          <iframe
+            id="geo-map"
+            src="place_colour_osm_map_nocluster.html"
+            loading="lazy"
+          ></iframe>
+        </div>
+
+        <h3>Edges</h3>
+        <p>Edges show relationships active during the selected year.</p>
+        <ul>
+          <li>Grey edges represent <em>team relationships</em> based on greeting data*.</li>
+          <li>Black edges represent <em>actual correspondence</em> (letters sent/received).</li>
+        </ul>
+        <p>In both cases, the thickness is exactly the number of mentions/letters in the selected year.</p>
+        <p>*The greeting data was used as follows:</p>
+        <ul>
+          <li>If a sender sends greetings <em>from</em> somebody, that person is considered part of his team and gets an edge to the sender.</li>
+          <li>If a sender sends greetings <em>to</em> somebody, that person is considered part of the addressee's team and gets an edge to addressee.</li>
+        </ul>
+
+        <h3>Time</h3>
+        <p>The slider filters the network to a specific year.</p>
+        <p>The play button animates the historical evolution.</p>
+
+        <h3>Interaction</h3>
+        <ul>
+          <li>Hover: highlight connections</li>
+          <li>Drag: move nodes</li>
+          <li>Click: open biography</li>
+          <li>Toggle: show/hide correspondence edges</li>
+        </ul>
+
+      </div>
+    </div>
+
 
     <div id="dynamic-graph-container"></div>
 
@@ -200,6 +323,35 @@
         const h = getTopOffset();
         document.documentElement.style.setProperty("--controls-h", `${h}px`);
       }
+
+
+      const helpOverlay = document.getElementById("help-overlay");
+      const helpToggle = document.getElementById("help-toggle");
+      const helpClose = document.getElementById("help-close");
+
+      helpToggle.addEventListener("click", () => {
+        helpOverlay.classList.add("open");
+
+        // tell iframe map to resize
+        const frame = document.getElementById("geo-map");
+        frame.contentWindow.postMessage("resize-map", "*");
+      });
+
+      helpClose.addEventListener("click", () => {
+        helpOverlay.classList.remove("open");
+      });
+
+      helpOverlay.addEventListener("click", e => {
+        if (e.target === helpOverlay) helpOverlay.classList.remove("open");
+      });
+
+      window.addEventListener("resize", () => {
+        const frame = document.getElementById("geo-map");
+        if (frame?.contentWindow) {
+          frame.contentWindow.postMessage("resize-map", "*");
+        }
+      });
+
 
       function openSidebarForNode(node) {
         // Your nodes seem to have ids like "P1". Use node.id as key.
