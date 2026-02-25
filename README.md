@@ -7,6 +7,5 @@ There is also an API ([Bullinger Greetings API](https://bullinger-saluta-api.onr
 - **Input:** Parameters such as the sender and the addressee
 - **Output:** The raw data greeting data between the selected correspondents (amount per year, direction, etc.), as well as a number of potentially relevant illustrations based on these data
 
-**Note**: The visualisation and its documentation are still under development.
 <br>
 The visualisation is inspired by https://github.com/davidnmora/d3-dynamic-graph.
