@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
     <!-- Windows -->
-    <meta name="theme-color" content="#242929">
+    <meta name="theme-color" content="#343a3a">
     <style>
       body {
         margin: 0;
@@ -41,7 +41,7 @@
         flex: 1;
       }
       #dynamic-graph-container {
-        background-color: rgb(36, 41, 41);
+        background-color: rgb(52, 58, 58);
         flex: 1;
         position: relative; /* helps tooltip positioning */
       }
@@ -106,7 +106,7 @@
         min="1"
         max="100"
         step="1"
-        value="20"
+        value="100"
         style="flex: 0 1 180px"
       />
 
@@ -201,20 +201,6 @@
           pointer-events: auto;
         }
 
-        #settings-toggle { padding: 6px 10px; cursor: pointer; }
-        /* settings live in a separate panel, so they have to be changed on purpose */
-        #settings-panel {
-          position: fixed; right: 10px; top: calc(var(--controls-h) + 6px); z-index: 60;
-          width: min(340px, 92vw); box-sizing: border-box;
-          padding: 12px 14px; border-radius: 8px;
-          background: rgba(15, 15, 18, 0.97); color: #eee;
-          box-shadow: 0 10px 30px rgba(0,0,0,.5);
-          font-size: 14px; display: none;
-        }
-        #settings-panel.open { display: block; }
-        #settings-panel h4 { margin: 0 0 10px; font-size: 15px; }
-        #settings-panel label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
-        #settings-panel .hint { opacity: 0.7; font-size: 12px; margin: 4px 0 0 24px; }
         #help-toggle {
           padding: 6px 10px;
           cursor: pointer;
@@ -227,40 +213,29 @@
         .link-controls .group-name { font-weight: 600; }
         /* legend sits over the bottom-left corner of the graph, so it never shifts the controls */
         #graph-legend {
-          position: absolute; left: 12px; bottom: 12px; z-index: 5;
-          display: flex; flex-direction: column; gap: 4px;
-          padding: 6px 10px; border-radius: 6px;
-          background: rgba(15, 15, 18, 0.85); color: #eee;
-          font-size: 13px; white-space: nowrap; pointer-events: none;
-        }
-        #graph-legend .row { display: flex; align-items: center; gap: 12px; }
-        #graph-legend .swatch { display: inline-block; width: 22px; height: 6px; margin-right: 5px; vertical-align: middle; }
-        /* edge types: solid = greetings, hatched = letters (colour shows direction) */
-        #graph-legend .swatch.letter { background: repeating-linear-gradient(90deg, #a0a0a0 0 3px, #000 3px 5px); }
-        #graph-legend .note { opacity: 0.7; }
+        position: absolute; left: 12px; bottom: 12px; z-index: 5;
+        display: flex; flex-direction: column; gap: 6px;
+        padding: 6px 10px; border-radius: 6px;
+        background: rgba(15, 15, 18, 0.5);   /* was 0.85 */
+        color: #eee; text-shadow: 0 0 3px #000, 0 0 3px #000;  /* keeps text readable over edges */
+        font-size: 13px; white-space: nowrap; pointer-events: none;
+      }
+      #graph-legend .row { display: flex; align-items: center; gap: 12px; }
+      #graph-legend .swatch { display: inline-block; width: 22px; height: 6px; margin-right: 5px; vertical-align: middle; }
+      #graph-legend .note { opacity: 0.7; font-size: 12px; }
       </style>
 
       <div class="link-controls">
         <span class="group-name">Letters</span>
-        <label title="Letter edges between persons who appear in the greeting data of this year">
-          <input type="checkbox" id="letters-inner" checked /> between greeting persons
+        <label title="Show connections for letters between Bullinger and persons who appear in the greeting data of this year">
+          <input type="checkbox" id="letters-inner" checked /> Bullinger ↔ greeting persons
         </label>
-        <label title="All other letter edges of this year, and the persons who only appear in letters">
+        <label title="Show connections for all other letters of this year, including those involving persons who do not appear in greetings">
           <input type="checkbox" id="letters-rest" /> all others
         </label>
       </div>
 
-      <button id="settings-toggle" title="Settings" aria-expanded="false">⚙</button>
       <button id="help-toggle" title="About this visualization">❓</button>
-    </div>
-
-    <div id="settings-panel" role="dialog" aria-label="Settings">
-      <h4>Settings</h4>
-      <label>
-        <input type="checkbox" id="setting-bullinger-letters" checked />
-        <span>Only show letters to or from Bullinger</span>
-      </label>
-      <div class="hint">When unticked, letters between other persons in the corpus are shown too (about 10% of all letters).</div>
     </div>
 
     <div id="sidebar" aria-hidden="true">
@@ -315,7 +290,7 @@
           <li><span style="color:#2ea043"><b>Green, type II</b></span>, greetings sent <em>from</em> somebody: the writer forwards greetings from a third person, who is considered part of the writer's team. Arrow: greeting person → writer.</li>
         </ul>
         <h3>Letters</h3>
-        <p>Letters are drawn as grey rows of arrows ( --&gt;--&gt; ) from the writer to the addressee. Where a greeting edge and a letter edge join the same two persons, they are drawn next to each other. By default only letters to or from Bullinger are shown (see ⚙ settings).</p>
+        <p>Letters are drawn as grey rows of arrows ( --&gt;--&gt; ) from the writer to the addressee. Where a greeting edge and a letter edge join the same two persons, they are drawn next to each other.</p>
 
         <h3>Time</h3>
         <p>The slider filters the network to a specific year.</p>
@@ -323,8 +298,8 @@
 
         <h3>Filtering</h3>
         <p>The graph shows the persons who appear in the greeting data in the selected year, plus Heinrich Bullinger, who is always shown. All their greeting edges are always shown.</p>
-        <p>Letter edges come in two groups, each with its own checkbox: <em>between greeting persons</em> (both persons appear in the greeting data of that year; on by default) and <em>all others</em>. Ticking <em>all others</em> also adds the persons who only appear in letters.</p>
-        <p>The <em>Show</em> slider selects a percentage of these persons, starting with those with the most letters in the corpus (ties are broken by activity in that year).</p>
+        <p>Letter edges come in two groups, each with its own checkbox: <em>Bullinger ↔ greeting persons</em> (letters between Bullinger and persons in the greeting data of that year; on by default) and <em>all others</em> (every other letter of that year, including letters between other persons). Ticking <em>all others</em> also adds the persons who only appear in letters.</p>
+        <p>The <em>Show</em> slider selects a percentage of these persons: those with the fewest greetings in that year are removed first; among persons with the same number of greetings, the smaller circle goes first.</p>
 
         <h3>Interaction</h3>
         <ul>
@@ -334,7 +309,6 @@
           <li>Hover an edge: its greetings ("X greets Z (via Y)") or letters</li>
           <li>Click an edge: full list of its greetings or letters</li>
           <li>Toggles: letter edges between greeting persons, and all other letter edges</li>
-          <li>⚙ Settings: by default only letters to or from Bullinger are shown; untick to include letters between other persons</li>
         </ul>
 
       </div>
@@ -343,8 +317,8 @@
 
     <div id="dynamic-graph-container">
       <div id="graph-legend">
-        <div class="row"><span><span class="swatch" style="background:#3987e5"></span>greetings passed on to (addressee → greeted person)</span></div>
-        <div class="row"><span><span class="swatch" style="background:#2ea043"></span>greetings sent from (greeting person → writer)</span></div>
+        <div class="row"><span><span class="swatch" style="background:#3987e5"></span><b>addressee's team:</b> writer asks addressee to greet someone</span></div>
+        <div class="row"><span><span class="swatch" style="background:#2ea043"></span><b>writer's team:</b> writer passes on greetings to addressee</span></div>
         <div class="row"><span><svg width="40" height="8" viewBox="0 0 40 8" style="margin-right:5px;vertical-align:middle"><path fill="#a0a0a0" d="M1,3h8v-3l6,4l-6,4v-3h-8ZM21,3h8v-3l6,4l-6,4v-3h-8Z"/></svg>letters (writer → addressee)</span><span class="note">arrows show the direction</span></div>
       </div>
     </div>
@@ -670,13 +644,11 @@
         topOffset: 0,
         avoidRects: legendRect,
         onNodeClick: (node) => {
-          setSettingsOpen(false); // node clicks don't reach the document listener
           openSidebarForNode(node);
         },
         onBackgroundClick: () => closeSidebar(),
         linkTooltipInnerHTML: linkTooltipHTML,
         onLinkClick: (link) => {
-          setSettingsOpen(false);
           openSidebarForLink(link);
         },
       }).nodeRadius((d) => d.radius);
@@ -705,27 +677,16 @@
       const lettersInner = d3.select("#letters-inner");
       const lettersRest = d3.select("#letters-rest");
 
-      // --- Settings panel ---
-      const settingsPanel = document.getElementById("settings-panel");
-      const settingsToggle = document.getElementById("settings-toggle");
-      const bullingerLettersOnly = d3.select("#setting-bullinger-letters");
-      function setSettingsOpen(open) {
-        settingsPanel.classList.toggle("open", open);
-        settingsToggle.setAttribute("aria-expanded", String(open));
-      }
-      settingsToggle.addEventListener("click", (e) => {
-        e.stopPropagation();
-        setSettingsOpen(!settingsPanel.classList.contains("open"));
-      });
-      settingsPanel.addEventListener("click", (e) => e.stopPropagation());
-      document.addEventListener("click", () => setSettingsOpen(false));
-      document.addEventListener("keydown", (e) => { if (e.key === "Escape") setSettingsOpen(false); });
-
       const involvesBullinger = (l) => l.sourceId === BULLINGER || l.targetId === BULLINGER;
-      // persons per year in letters to/from Bullinger only (used when the setting is on)
-      const bullingerLetterPersonsByYear = involvedByYear(
-        new Map([...correspondenceByKey].filter(([, l]) => involvesBullinger(l)))
-      );
+
+      // year -> person -> number of greetings on their greeting edges that year
+      const greetingCountByYear = new Map();
+      for (const l of greetingByKey.values()) {
+        if (!greetingCountByYear.has(l.start)) greetingCountByYear.set(l.start, new Map());
+        const m = greetingCountByYear.get(l.start);
+        m.set(l.sourceId, (m.get(l.sourceId) || 0) + l.thickness);
+        m.set(l.targetId, (m.get(l.targetId) || 0) + l.thickness);
+      }
       const ALWAYS_SHOWN = [BULLINGER];
 
       function filterByTime(t, pct) {
@@ -733,16 +694,14 @@
 
         // Persons shown: everyone in the greeting data of year t (plus Bullinger);
         // with "all others" ticked also everyone in the letter data of year t.
-        // Ranked by letters in the corpus, ties by their activity in that year.
-        const yearActivity = activityByYear.get(t) || new Map();
+        // Ranked by their greetings in that year, ties by circle size (letters
+        // in the corpus): the percentage removes those with the fewest greetings first.
+        const yearGreetings = greetingCountByYear.get(t) || new Map();
         const greetingIds = new Set(greetingPersonsByYear.get(t) || []);
         greetingIds.add(BULLINGER); // Bullinger counts as part of the greeting network
         const poolIds = new Set(greetingPersonsByYear.get(t) || []);
         if (lettersRest.property("checked")) {
-          const letterPersons = bullingerLettersOnly.property("checked")
-            ? bullingerLetterPersonsByYear
-            : correspondencePersonsByYear;
-          for (const id of letterPersons.get(t) || []) poolIds.add(id);
+          for (const id of correspondencePersonsByYear.get(t) || []) poolIds.add(id);
         }
         // Bullinger always belongs to the group while he is active
         for (const id of ALWAYS_SHOWN) {
@@ -753,8 +712,8 @@
           .map((id) => nodeById.get(id))
           .filter(Boolean)
           .sort((a, b) =>
-            (b.count || 0) - (a.count || 0) ||
-            (yearActivity.get(b.id) || 0) - (yearActivity.get(a.id) || 0)
+            (yearGreetings.get(b.id) || 0) - (yearGreetings.get(a.id) || 0) ||
+            (b.count || 0) - (a.count || 0)
           );
 
         const shown = active.length ? Math.max(1, Math.round((active.length * pct) / 100)) : 0;
@@ -772,13 +731,11 @@
 
         const activeIds = new Set(filteredNodes.map((n) => n.id));
         // greeting edges always; letter edges between the persons shown, split into
-        // "between greeting persons" (both ends in the greeting data) and the rest
+        // "Bullinger <-> greeting persons" and all others (incl. letters without Bullinger)
         const showInner = lettersInner.property("checked");
         const showRest = lettersRest.property("checked");
-        const onlyBullinger = bullingerLettersOnly.property("checked");
         const letterLinks = linksAmong(correspondenceByYear, activeIds, t).filter((l) => {
-          if (onlyBullinger && !involvesBullinger(l)) return false;
-          const inner = greetingIds.has(l.sourceId) && greetingIds.has(l.targetId);
+          const inner = involvesBullinger(l) && greetingIds.has(l.sourceId) && greetingIds.has(l.targetId);
           return inner ? showInner : showRest;
         });
         const activeLinks = [...linksAmong(greetingsByYear, activeIds, t), ...letterLinks];
@@ -795,7 +752,6 @@
       pctSlider.on("input", updateFromSliders);
       lettersInner.on("change", updateFromSliders);
       lettersRest.on("change", updateFromSliders);
-      bullingerLettersOnly.on("change", updateFromSliders);
 
       // --- Play / Pause ---
       const playBtn = document.getElementById("play-toggle");
@@ -804,7 +760,7 @@
       let playTimer = null;
 
       // tune these:
-      const PLAY_INTERVAL_MS = 3000; // how fast it steps (lower = faster)
+      const PLAY_INTERVAL_MS = 5000; // how fast it steps (lower = faster)
       const PLAY_STEP = 1;          // years per step
 
       function setPlaying(next) {

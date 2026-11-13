@@ -4,7 +4,19 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     topOffset: 0,
     width: window.innerWidth,
     height: window.innerHeight,
-    transitionTime: 10, // milliseconds
+    // CHANGING YEARS: the new layout is computed first, then every person glides
+    // from where they are to their new place along this curve (slow start,
+    // speeding up, slowing down, settling), in exactly this time.
+    transitionDuration: 4000, // milliseconds
+    transitionEase: d3.easeCubicInOut,
+    // persons, names and edges that leave fade out during the first part of the
+    // transition, those that arrive fade in during the last part
+    fadeShare: 0.6, // share of the transition each fade takes (0..1)
+    layoutAlpha: 0.4, // how much the layout may rearrange per change (simulation energy)
+    // how long the simulation runs (in advance) before it settles, relative to
+    // d3's default: higher = more time to sort itself out, tidier result
+    // (the animation still takes transitionDuration)
+    layoutRunLength: 3.5,
 
     // LAYOUT -- all distances scale with the space per person on screen
     // (sqrt(graph area / number of persons)), so the layout behaves the same
@@ -27,7 +39,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     // rectangles (graph coordinates) persons must stay out of, e.g. the legend
     avoidRects: () => [],
     nodeRefProp: "id",
-    unfocusOpacity: 0.6,
+    unfocusOpacity: 0.8,
     focusOpacity: 0.95,
     unfocusBrightness: 0.6,
     unfocusStrokeThickness: 0.5,
@@ -64,6 +76,13 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
 
   // Private state
   let link, node, label, simulation;
+  // elements of persons / edges that are leaving and still fading out
+  let nodeExit = d3.select(null), labelExit = d3.select(null), linkExit = d3.select(null);
+  // transition between two updates
+  let tween = null; // d3.timer while a transition runs
+  let tweenE = null; // eased progress 0..1 while a transition runs, else null
+  let scaleFrom = 1, scaleTo = 1;
+  let frameCount = 0;
   let focusId = null; // id of the hovered node
   let hoveredLink = null; // hovered link datum
   // Ids of lit (non-dimmed) nodes. Rebuilt from focusId / hoveredLink on every
@@ -160,7 +179,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
   // (capped, so thick letter edges read as thick dashes with modest heads)
   const headExtra = (shaft) => Math.min(8, Math.max(4, shaft * 0.4));
   const visualWidth = (d) => {
-    const W = d.__w ?? linkWidth(d);
+    const W = d.__wNow ?? d.__w ?? linkWidth(d);
     return isArrowRow(d) ? W + headExtra(W / Math.max(1, (d.__strands || []).length)) : W;
   };
 
@@ -177,7 +196,8 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
       d.__strands = orderedStrands(d);
       d.__w = linkWidth(d);
       const rows = isArrowRow(d);
-      this.style.opacity = isFocusedLink(d) ? pubVar.focusOpacity : pubVar.unfocusOpacity;
+      this.__baseOpacity = isFocusedLink(d) ? pubVar.focusOpacity : pubVar.unfocusOpacity;
+      this.style.opacity = this.__baseOpacity * (this.__fade ?? 1);
       for (let i = 0; i < MAX_STRANDS; i++) {
         const s = !rows && d.__strands[i];
         r.lines[i].style.display = s ? null : "none";
@@ -247,18 +267,27 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     return isArrowRow(d) ? total / 2 - me / 2 : -total / 2 + me / 2;
   }
 
-  function positionLinks() {
-    if (!link) return;
-    link.each(function (d) {
+  // during a transition, widths and side-by-side offsets blend from what was
+  // on screen before to their new values
+  const blend = (from, to) => (tweenE === null || from == null ? to : from + (to - from) * tweenE);
+
+  function positionLinks(sel = link) {
+    if (!sel) return;
+    // widths first, so side-by-side edges can use each other's current width
+    sel.each(function (d) {
+      d.__wNow = blend(this.__wFrom, d.__w ?? linkWidth(d));
+    });
+    sel.each(function (d) {
       const r = this.__refs;
       const strands = d.__strands || orderedStrands(d);
-      const W = d.__w ?? linkWidth(d);
+      const W = d.__wNow;
       const a = d.source, b = d.target;
+      if (typeof a !== "object" || typeof b !== "object") return;
 
       const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       const ux = (b.x - a.x) / len, uy = (b.y - a.y) / len; // a -> b
       const nx = -uy, ny = ux; // right-hand side of a -> b (y points down)
-      const shift = siblingOffset(d);
+      const shift = (d.__offNow = blend(this.__offFrom, siblingOffset(d)));
       const ax = a.x + nx * shift, ay = a.y + ny * shift;
       const bx = b.x + nx * shift, by = b.y + ny * shift;
       const mx = (ax + bx) / 2, my = (ay + by) / 2;
@@ -370,30 +399,103 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     refreshFocus();
   }
 
-  // 5. TICK -------------------------------------------------------------------------
+  // 5. DRAWING -------------------------------------------------------------------------
+  function drawNodes(sel) {
+    sel.each(function (d) {
+      const r = R(d);
+      d.x = Math.max(r, Math.min(pubVar.width - r, d.x));
+      d.y = Math.max(pubVar.topOffset + r, Math.min(pubVar.height - r, d.y));
+      this.setAttribute("r", r);
+      this.setAttribute("cx", d.x);
+      this.setAttribute("cy", d.y);
+    });
+  }
+
+  function drawLabels(sel) {
+    sel.attr("x", (d) => d.x).attr("y", (d) => d.y - R(d) - 6);
+  }
+
+  // live simulation (only runs while a person is dragged)
   let tickCount = 0;
   function ticked() {
-    node
-      .attr("r", R)
-      .attr("fill", nodeFill)
-      .attr("cx", (d) => {
-        const r = R(d);
-        d.x = Math.max(r, Math.min(pubVar.width - r, d.x));
-        return d.x;
-      })
-      .attr("cy", (d) => {
-        const r = R(d);
-        d.y = Math.max(pubVar.topOffset + r, Math.min(pubVar.height - r, d.y));
-        return d.y;
-      });
-
+    drawNodes(node);
+    node.attr("fill", nodeFill);
     positionLinks();
-
-    label.attr("x", (d) => d.x).attr("y", (d) => d.y - R(d) - 6);
+    drawLabels(label);
     if (++tickCount % 5 === 0 || simulation.alpha() < simulation.alphaMin() * 2) declutterLabels();
   }
 
-  // 6. UPDATE GRAPH AFTER FILTERING DATA ------------------------------------------------------
+  // 6. TRANSITION BETWEEN TWO UPDATES ---------------------------------------------------
+  // Each element keeps its own fade: __fade (now), __fadeFrom -> __fadeTo (this transition)
+  function setFade(sel, to) {
+    sel.each(function () {
+      this.__fadeFrom = this.__fade ?? 0;
+      this.__fadeTo = to;
+    });
+  }
+
+  // leaving elements fade during the first part, arriving ones during the last part
+  function fadeAt(el, t) {
+    const from = el.__fadeFrom ?? 1, to = el.__fadeTo ?? 1;
+    if (from === to) return to;
+    const share = Math.max(0.05, Math.min(1, pubVar.fadeShare));
+    const p = to > from ? (t - (1 - share)) / share : t / share;
+    return from + (to - from) * pubVar.transitionEase(Math.max(0, Math.min(1, p)));
+  }
+
+  function applyFades(t) {
+    const set = (sel, apply) =>
+      sel.each(function () {
+        this.__fade = t === null ? this.__fadeTo ?? 1 : fadeAt(this, t);
+        apply(this);
+      });
+    for (const sel of [node, nodeExit]) set(sel, (el) => el.setAttribute("opacity", el.__fade));
+    for (const sel of [label, labelExit]) set(sel, (el) => el.setAttribute("fill-opacity", el.__fade));
+    for (const sel of [link, linkExit]) set(sel, (el) => (el.style.opacity = (el.__baseOpacity ?? pubVar.unfocusOpacity) * el.__fade));
+  }
+
+  function frame(t) {
+    const e = pubVar.transitionEase(t);
+    tweenE = e;
+    scale = scaleFrom + (scaleTo - scaleFrom) * e;
+    for (const d of simulation.nodes()) {
+      d.x = d.__x0 + (d.__tx - d.__x0) * e;
+      d.y = d.__y0 + (d.__ty - d.__y0) * e;
+    }
+    drawNodes(node);
+    drawNodes(nodeExit);
+    node.each(function (d) {
+      const to = nodeFill(d);
+      this.setAttribute("fill", this.__fillFrom ? d3.interpolateRgb(this.__fillFrom, to)(e) : to);
+    });
+    drawLabels(label);
+    positionLinks(link);
+    positionLinks(linkExit);
+    applyFades(t);
+    if (++frameCount % 4 === 0) declutterLabels();
+  }
+
+  // stop a running transition where it is (positions, fades and sizes stay as drawn)
+  function stopTween() {
+    if (tween) tween.stop();
+    tween = null;
+    tweenE = null;
+  }
+
+  // end the transition: leaving elements are removed, everything takes its final state
+  function finishTween() {
+    stopTween();
+    scale = scaleTo;
+    applyFades(null);
+    for (const sel of [nodeExit, labelExit, linkExit]) sel.filter(function () { return this.__fadeTo === 0; }).remove();
+    nodeExit = labelExit = linkExit = d3.select(null);
+    node.each(function () { this.__fillFrom = null; });
+    link.each(function () { this.__wFrom = null; this.__offFrom = null; });
+    drawNodes(node);
+    refreshFocus();
+  }
+
+  // 7. UPDATE GRAPH AFTER FILTERING DATA ------------------------------------------------------
   function updateVis(nodes, links) {
     if (!simulation) {
       simulation = d3
@@ -432,81 +534,97 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
             }
           }
         })
-        .on("tick", ticked);
+        .on("tick", ticked)
+        .stop();
     }
 
+    // freeze what is on screen now; the transition starts from exactly there
+    // (also when the previous one has not finished yet)
+    stopTween();
     simulation.stop();
+    nodeLayer.selectAll("circle.node").each(function () { this.__fillFrom = this.getAttribute("fill"); });
+    linkLayer.selectAll("g.link").each(function (d) {
+      this.__wFrom = d.__wNow ?? d.__w;
+      this.__offFrom = d.__offNow ?? null;
+    });
+    scaleFrom = scale;
 
     // --- LAYOUT SCALE: circle sizes and distances from the space available ---
     const L = pubVar.layout;
     const area = pubVar.width * Math.max(1, pubVar.height - pubVar.topOffset);
     const circleArea = nodes.reduce((s, d) => s + Math.PI * (pubVar.nodeRadius(d) + L.nodePadding) ** 2, 0) || 1;
-    scale = Math.min(1, Math.sqrt((L.fillRatio * area) / circleArea));
+    scaleTo = Math.min(1, Math.sqrt((L.fillRatio * area) / circleArea));
+    scale = scaleTo; // the new layout is computed with the new sizes
     spacing = Math.sqrt(area / Math.max(1, nodes.length));
 
     simulation.force("charge").strength(-spacing * L.repulsion).distanceMax(spacing * L.repulsionRange);
     simulation.force("x").x(pubVar.width / 2).strength(L.centering);
     simulation.force("y").y(pubVar.topOffset + (pubVar.height - pubVar.topOffset) / 2).strength(L.centering);
     simulation.force("collide").radius((d) => R(d) + L.nodePadding).strength(1);
+    simulation.velocityDecay(L.friction);
 
     // --- NODES ---
+    // persons still fading out from a previous change are matched again, so a
+    // person who comes back simply fades in again from where they are
     const gridCols = 3, gridRows = 3, jitter = 60;
-    node = nodeLayer
-      .selectAll("circle.node")
-      .data(nodes, (d) => d.id)
-      .join(
-        (enter) =>
-          enter
-            .append("circle")
-            .attr("class", "node")
-            .each((d) => {
-              const cellWidth = pubVar.width / gridCols;
-              const cellHeight = pubVar.height / gridRows;
-              if (typeof d.starting_loc_x === "number" && typeof d.starting_loc_y === "number") {
-                d.x = d.starting_loc_y * cellWidth + cellWidth / 2 + (Math.random() * 2 - 1) * jitter;
-                d.y = d.starting_loc_x * cellHeight + cellHeight / 2 + (Math.random() * 2 - 1) * jitter;
-              } else {
-                d.x = Math.random() * pubVar.width;
-                d.y = Math.random() * pubVar.height;
-              }
-            })
-            .attr("r", 0)
-            .attr("fill", nodeFill)
-            .call((sel) =>
-              sel.transition().duration(pubVar.transitionTime).attr("r", (d) => R(d))
-            )
-            .on("mouseover", (event, d) => {
-              showTooltip(event, pubVar.tooltipInnerHTML(d));
-              focusId = d.id;
-              refreshFocus();
-            })
-            .on("mousemove", moveTooltip)
-            .on("mouseout", () => {
-              hideTooltip();
-              focusId = null;
-              refreshFocus();
-            })
-            .on("click", (event, d) => {
-              if (typeof pubVar.onNodeClick === "function") pubVar.onNodeClick(d, event);
-              event.stopPropagation();
-            })
-            .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended)),
-        (update) => update,
-        (exit) => exit.transition().duration(pubVar.transitionTime).attr("r", 0).remove()
-      );
+    const nodeSel = nodeLayer.selectAll("circle.node").data(nodes, (d) => d.id);
+    const nodeEnter = nodeSel
+      .enter()
+      .append("circle")
+      .attr("class", "node")
+      .attr("opacity", 0)
+      .each(function (d) {
+        this.__fade = 0;
+        // starting point for the layout computation only (new persons appear in place)
+        const cellWidth = pubVar.width / gridCols;
+        const cellHeight = pubVar.height / gridRows;
+        if (typeof d.starting_loc_x === "number" && typeof d.starting_loc_y === "number") {
+          d.x = d.starting_loc_y * cellWidth + cellWidth / 2 + (Math.random() * 2 - 1) * jitter;
+          d.y = d.starting_loc_x * cellHeight + cellHeight / 2 + (Math.random() * 2 - 1) * jitter;
+        } else {
+          d.x = Math.random() * pubVar.width;
+          d.y = Math.random() * pubVar.height;
+        }
+      })
+      .on("mouseover", (event, d) => {
+        showTooltip(event, pubVar.tooltipInnerHTML(d));
+        focusId = d.id;
+        refreshFocus();
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseout", () => {
+        hideTooltip();
+        focusId = null;
+        refreshFocus();
+      })
+      .on("click", (event, d) => {
+        if (typeof pubVar.onNodeClick === "function") pubVar.onNodeClick(d, event);
+        event.stopPropagation();
+      })
+      .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+    const entering = new Set(nodeEnter.data());
+    node = nodeEnter.merge(nodeSel).style("pointer-events", null);
+    nodeExit = nodeSel.exit().style("pointer-events", "none");
+    setFade(node, 1);
+    setFade(nodeExit, 0);
 
     // --- LABELS ---
-    label = labelLayer
-      .selectAll("text.node-label")
-      .data(nodes, (d) => d.id)
-      .join("text")
+    const labelSel = labelLayer.selectAll("text.node-label").data(nodes, (d) => d.id);
+    const labelEnter = labelSel
+      .enter()
+      .append("text")
       .attr("class", "node-label")
-      .text((d) => d.name || d.id)
       .attr("fill", "white")
+      .attr("fill-opacity", 0)
       .attr("text-anchor", "middle")
       .style("pointer-events", "none")
       .style("font-size", "12px")
-      .style("opacity", pubVar.unfocusOpacity);
+      .style("opacity", pubVar.unfocusOpacity)
+      .each(function () { this.__fade = 0; });
+    label = labelEnter.merge(labelSel).text((d) => d.name || d.id);
+    labelExit = labelSel.exit();
+    setFade(label, 1);
+    setFade(labelExit, 0);
 
     // --- LINKS ---
     simulation.nodes(nodes);
@@ -515,49 +633,53 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
       .distance((l) => R(l.source) + R(l.target) + spacing * (l.linkType === "correspondence" ? L.letterLength : L.greetingLength))
       .strength((l) => (l.linkType === "correspondence" ? L.letterPull : L.greetingPull));
 
-    link = linkLayer
+    const linkSel = linkLayer
       .selectAll("g.link")
-      .data(links, (d) => `${d.sourceId}-${d.targetId}-${d.linkType}`)
-      .join((enter) => {
-        const g = enter.append("g").attr("class", "link");
-        g.each(function () {
-          const sel = d3.select(this);
-          const none = (s) => s.style("pointer-events", "none");
-          this.__refs = {
-            lines: d3.range(MAX_STRANDS).map(() => none(sel.append("line").attr("class", "link-strand")).node()),
-            rows: d3.range(2).map(() => {
-              const row = none(sel.append("g").attr("class", "link-arrow-row"));
-              row.append("path");
-              return row.node();
-            }),
-            arrows: d3.range(MAX_STRANDS).map(() => none(sel.append("path").attr("class", "link-arrow")).node()),
-          };
-        });
-        g.append("line")
-          .attr("class", "link-hit")
-          .attr("stroke", "transparent")
-          .style("pointer-events", "stroke")
-          .style("cursor", "pointer")
-          .each(function () {
-            this.parentNode.__refs.hit = this;
-          })
-          .on("click", (event, d) => {
-            if (typeof pubVar.onLinkClick === "function") pubVar.onLinkClick(d, event);
-            event.stopPropagation();
-          })
-          .on("mouseover", (event, d) => {
-            hoveredLink = d;
-            showTooltip(event, pubVar.linkTooltipInnerHTML(d));
-            refreshFocus();
-          })
-          .on("mousemove", moveTooltip)
-          .on("mouseout", () => {
-            hoveredLink = null;
-            hideTooltip();
-            refreshFocus();
-          });
-        return g;
+      .data(links, (d) => `${d.sourceId}-${d.targetId}-${d.linkType}`);
+    const linkEnter = linkSel.enter().append("g").attr("class", "link").style("opacity", 0);
+    linkEnter.each(function () {
+      this.__fade = 0;
+      const sel = d3.select(this);
+      const none = (s) => s.style("pointer-events", "none");
+      this.__refs = {
+        lines: d3.range(MAX_STRANDS).map(() => none(sel.append("line").attr("class", "link-strand")).node()),
+        rows: d3.range(2).map(() => {
+          const row = none(sel.append("g").attr("class", "link-arrow-row"));
+          row.append("path");
+          return row.node();
+        }),
+        arrows: d3.range(MAX_STRANDS).map(() => none(sel.append("path").attr("class", "link-arrow")).node()),
+      };
+    });
+    linkEnter
+      .append("line")
+      .attr("class", "link-hit")
+      .attr("stroke", "transparent")
+      .style("cursor", "pointer")
+      .each(function () {
+        this.parentNode.__refs.hit = this;
+      })
+      .on("click", (event, d) => {
+        if (typeof pubVar.onLinkClick === "function") pubVar.onLinkClick(d, event);
+        event.stopPropagation();
+      })
+      .on("mouseover", (event, d) => {
+        hoveredLink = d;
+        showTooltip(event, pubVar.linkTooltipInnerHTML(d));
+        refreshFocus();
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseout", () => {
+        hoveredLink = null;
+        hideTooltip();
+        refreshFocus();
       });
+    link = linkEnter.merge(linkSel);
+    linkExit = linkSel.exit();
+    link.each(function () { this.__refs.hit.style.pointerEvents = "stroke"; });
+    linkExit.each(function () { this.__refs.hit.style.pointerEvents = "none"; });
+    setFade(link, 1);
+    setFade(linkExit, 0);
 
     // hit lines must see the current datum (join only propagates to direct children on enter)
     link.each(function (d) {
@@ -575,31 +697,61 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
       for (const l of group) l.__sibling = group.find((o) => o !== l) || null;
     }
 
+    // --- NEW LAYOUT, computed in advance from where everybody is now ---
+    for (const d of nodes) {
+      d.__x0 = d.x;
+      d.__y0 = d.y;
+      d.vx = d.vy = 0;
+    }
+    // d3's default decay runs 300 ticks from alpha 1 down to alphaMin; this stretches that
+    simulation.alphaDecay(1 - Math.pow(simulation.alphaMin(), 1 / (300 * Math.max(0.1, pubVar.layoutRunLength))));
+    simulation.alpha(pubVar.layoutAlpha);
+    const ticks = Math.ceil(Math.log(simulation.alphaMin() / simulation.alpha()) / Math.log(1 - simulation.alphaDecay()));
+    simulation.tick(Math.max(1, ticks));
+    for (const d of nodes) {
+      const r = R(d);
+      d.__tx = Math.max(r, Math.min(pubVar.width - r, d.x));
+      d.__ty = Math.max(pubVar.topOffset + r, Math.min(pubVar.height - r, d.y));
+      // persons who just arrive appear in their place; everybody else glides there
+      if (entering.has(d)) {
+        d.__x0 = d.__tx;
+        d.__y0 = d.__ty;
+      }
+      d.x = d.__x0;
+      d.y = d.__y0;
+      d.vx = d.vy = 0;
+    }
+
     // drop focus that pointed at a node no longer shown, then rebuild the lit
     // set for the new year/selection (also dims nodes that just entered)
     if (focusId !== null && !nodes.some((n) => n.id === focusId)) focusId = null;
     hoveredLink = null;
-    refreshFocus();
+    computeLitIds();
+    styleLinks();
+    label
+      .style("opacity", (n) => (litIds.has(n.id) ? pubVar.focusOpacity : pubVar.unfocusOpacity))
+      .style("font-size", (n) => (litIds.has(n.id) ? "16px" : "12px"));
 
-    // restart exactly as in the original: start almost at rest, restart once
-    // more after 1 s, and ramp alpha up to 0.4 over 2 s
-    const startAlpha = 0.00001, targetAlpha = 0.4, duration = 2000;
-    simulation.alpha(startAlpha).restart();
-    setTimeout(() => {
-      simulation.alpha(startAlpha).restart();
-    }, 1000);
-    const startTime = Date.now();
-    const interpolator = d3.interpolateNumber(startAlpha, targetAlpha);
-    const rampUp = d3.timer(() => {
-      const t = Math.min(1, (Date.now() - startTime) / duration);
-      simulation.alpha(interpolator(t)).restart();
-      if (t === 1) rampUp.stop();
+    // --- PLAY THE TRANSITION ---
+    frame(0);
+    declutterLabels();
+    const duration = Math.max(0, pubVar.transitionDuration);
+    if (duration === 0) {
+      frame(1);
+      finishTween();
+      return;
+    }
+    tween = d3.timer((elapsed) => {
+      const t = Math.min(1, elapsed / duration);
+      frame(t);
+      if (t === 1) finishTween();
     });
-    simulation.velocityDecay(L.friction);
   }
 
   // DRAG EVENTS ______________________________
   function dragstarted(event) {
+    // grabbing a person mid-transition ends it where it is; the live layout takes over
+    if (tween) finishTween();
     if (!event.active) simulation.alphaTarget(0.3).restart();
     event.subject.fx = event.subject.x;
     event.subject.fy = event.subject.y;
