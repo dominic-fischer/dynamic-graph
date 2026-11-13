@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D3 Time-Filtered Dynamic Graph</title>
+    <!-- modern browsers -->
+    <link rel="icon" type="image/svg+xml" href="/dynamic-graph/assets/favicon-C4TAoiEk.svg">
+
+    <!-- fallback -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <!-- Windows -->
+    <meta name="theme-color" content="#242929">
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      #controls {
+        padding: 10px;
+        background: #d3d0d0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      label {
+        font-size: 14px;
+      }
+      input[type="range"] {
+        flex: 1;
+      }
+      #dynamic-graph-container {
+        background-color: rgb(36, 41, 41);
+        flex: 1;
+        position: relative; /* helps tooltip positioning */
+      }
+      /* keep only opacity here; color comes from D3 */
+      #dynamic-graph-container svg line {
+        stroke-opacity: 0.8;
+      }
+
+      #help-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+      }
+
+      #help-overlay.open {
+        display: flex;
+      }
+
+      #help-modal {
+        background: #111;
+        color: #eee;
+        width: min(720px, 92vw);
+        max-height: 85vh;
+        overflow: auto;
+        padding: 24px 26px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,.6);
+      }
+
+      #help-modal h2 { margin-top: 0; }
+
+      #help-close {
+        float: right;
+        cursor: pointer;
+        font-size: 18px;
+        margin-left: 12px;
+      }
+    </style>
+    <script type="module" crossorigin src="/dynamic-graph/assets/index-CFVn_VfL.js"></script>
+  </head>
+  <body>
+    <div id="controls">
+      <label for="time-slider">Time: <span id="time-value"></span></label>
+      <input
+        type="range"
+        id="time-slider"
+        min="1523"
+        max="1575"
+        step="1"
+        value="1523"
+      />
+
+      <label for="topn-slider">Top N: <span id="topn-value">All</span></label>
+      <input
+        type="range"
+        id="topn-slider"
+        min="0"
+        max="50"
+        step="5"
+        value="50"
+      />
+
+      <button id="play-toggle" type="button">▶ Play</button>
+
+      <style>
+        #play-toggle { padding: 6px 10px; cursor: pointer; }
+
+        :root {
+          --controls-h: 0px;
+          --sidebar-w: 340px;
+        }
+
+        /* Overlay panel */
+        #sidebar {
+          position: fixed;
+          left: 0;
+          top: var(--controls-h);          /* starts below the sliders */
+          width: var(--sidebar-w);
+          height: calc(100vh - var(--controls-h));
+
+          background: rgba(15, 15, 18, 0.96);
+          backdrop-filter: blur(6px);
+
+          color: #eee;
+          border-right: 1px solid rgba(255,255,255,0.12);
+          overflow: auto;
+
+          transform: translateX(-105%);
+          transition: transform 240ms cubic-bezier(.2,.8,.2,1);
+
+          z-index: 50;                     /* above SVG */
+          padding: 14px 14px 20px;
+          box-sizing: border-box;
+
+          box-shadow: 6px 0 30px rgba(0,0,0,.45);
+        }
+
+        #sidebar.open {
+          transform: translateX(0);
+        }
+
+
+        #sidebar-close {
+          position: sticky;
+          top: 0;
+          float: right;
+          margin: 0 0 8px 8px;
+          padding: 6px 10px;
+          cursor: pointer;
+        }
+
+        #sidebar-content h2 {
+          margin: 0 0 6px;
+          font-size: 18px;
+        }
+
+        #sidebar-content .meta {
+          opacity: 0.85;
+          font-size: 13px;
+          margin-bottom: 10px;
+        }
+
+        #sidebar-content img.thumb {
+          display: block;
+          width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin: 10px 0;
+        }
+
+        #sidebar-content a {
+          color: #8ab4ff;
+          text-decoration: none;
+        }
+        #sidebar-content a:hover {
+          text-decoration: underline;
+        }
+
+        #sidebar-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,.35);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 200ms ease;
+          z-index: 40;
+        }
+
+        #sidebar.open + #sidebar-backdrop {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        #help-toggle {
+          padding: 6px 10px;
+          cursor: pointer;
+        }
+      </style>
+
+      <label style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="correspondence-toggle" checked />
+        Correspondence links
+      </label>
+
+      <button id="help-toggle" title="About this visualization">❓</button>
+    </div>
+
+    <div id="sidebar" aria-hidden="true">
+      <button id="sidebar-close" type="button" title="Close">✕</button>
+      <div id="sidebar-content"></div>
+    </div>
+    <div id="sidebar-backdrop"></div>
+
+    <div id="help-overlay">
+      <div id="help-modal">
+        <button id="help-close">✕</button>
+
+        <h2>About this visualization</h2>
+
+        <h3>Nodes</h3>
+        <p>Each circle represents a person, whereby size indicates importance based on correspondence volume in the Bullinger Corpus. It is proportional to the number of letters sent and received. Note that the maximum size is clamped to the second largest node, as Bullinger himself is an outlier in correspondence volume.</p>
+        <h3>Geographic colour mapping</h3>
+        <p>Color indicates the main location in a year, i.e., where the most correspondence was exchanged. A place's colours are based on its coordinates, whereby:</p>
+        <ul>
+          <li>Direction from Zürich → hue (color family)</li>
+          <li>Distance from Zürich → saturation (strength of color)</li>
+        </ul>
+        <p>
+        The colour-coded locations are shown on the map below:
+        </p>
+
+        <style>
+          #geo-map-container {
+            width: 100%;
+            height: min(70vh, 800px); /* responsive height */
+            aspect-ratio: 16 / 9;     /* optional but nice */
+          }
+
+          #geo-map {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border: none;
+          }
+        </style>
+
+        <div id="geo-map-container">
+          <iframe id="geo-map" loading="lazy"></iframe>
+        </div>
+
+        <h3>Edges</h3>
+        <p>Edges show relationships active during the selected year.</p>
+        <ul>
+          <li>Grey edges represent <em>team relationships</em> based on greeting data*.</li>
+          <li>Black edges represent <em>actual correspondence</em> (letters sent/received).</li>
+        </ul>
+        <p>In both cases, the thickness is exactly the number of mentions/letters in the selected year.</p>
+        <p>*The greeting data was used as follows:</p>
+        <ul>
+          <li>If a sender sends greetings <em>from</em> somebody, that person is considered part of his team and gets an edge to the sender.</li>
+          <li>If a sender sends greetings <em>to</em> somebody, that person is considered part of the addressee's team and gets an edge to addressee.</li>
+        </ul>
+
+        <h3>Time</h3>
+        <p>The slider filters the network to a specific year.</p>
+        <p>The play button animates the historical evolution.</p>
+
+        <h3>Interaction</h3>
+        <ul>
+          <li>Hover: highlight connections</li>
+          <li>Drag: move nodes</li>
+          <li>Click: open biography</li>
+          <li>Toggle: show/hide correspondence edges</li>
+        </ul>
+
+      </div>
+    </div>
+
+
+    <div id="dynamic-graph-container"></div>
+
+  </body>
+</html>

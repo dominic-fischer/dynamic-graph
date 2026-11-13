@@ -1,0 +1,8 @@
+for installation:
+    npm run install
+
+for local development:
+    npm run dev
+
+for public deployment:
+    npm run deploy

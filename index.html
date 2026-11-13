@@ -27,9 +27,13 @@
         padding: 10px;
         background: #d3d0d0;
         display: flex;
+        flex-wrap: wrap; /* wrap onto a second row instead of squeezing */
         align-items: center;
-        gap: 12px;
+        gap: 8px 12px;
       }
+      #controls > label,
+      #controls > button { white-space: nowrap; }
+      #time-slider { min-width: 160px; }
       label {
         font-size: 14px;
       }
@@ -93,14 +97,17 @@
         value="1523"
       />
 
-      <label for="topn-slider">Top N: <span id="topn-value">All</span></label>
+      <label for="pct-slider" title="Share of the persons active in the selected year, largest correspondents first">
+        Show: <span id="pct-value"></span>
+      </label>
       <input
         type="range"
-        id="topn-slider"
-        min="0"
-        max="50"
-        step="5"
-        value="50"
+        id="pct-slider"
+        min="1"
+        max="100"
+        step="1"
+        value="20"
+        style="flex: 0 1 180px"
       />
 
       <button id="play-toggle" type="button">▶ Play</button>
@@ -194,18 +201,66 @@
           pointer-events: auto;
         }
 
+        #settings-toggle { padding: 6px 10px; cursor: pointer; }
+        /* settings live in a separate panel, so they have to be changed on purpose */
+        #settings-panel {
+          position: fixed; right: 10px; top: calc(var(--controls-h) + 6px); z-index: 60;
+          width: min(340px, 92vw); box-sizing: border-box;
+          padding: 12px 14px; border-radius: 8px;
+          background: rgba(15, 15, 18, 0.97); color: #eee;
+          box-shadow: 0 10px 30px rgba(0,0,0,.5);
+          font-size: 14px; display: none;
+        }
+        #settings-panel.open { display: block; }
+        #settings-panel h4 { margin: 0 0 10px; font-size: 15px; }
+        #settings-panel label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+        #settings-panel .hint { opacity: 0.7; font-size: 12px; margin: 4px 0 0 24px; }
         #help-toggle {
           padding: 6px 10px;
           cursor: pointer;
         }
       </style>
 
-      <label style="display:flex; align-items:center; gap:6px;">
-        <input type="checkbox" id="correspondence-toggle" checked />
-        Correspondence links
-      </label>
+      <style>
+        .link-controls { display: flex; align-items: center; gap: 8px; font-size: 14px; white-space: nowrap; }
+        .link-controls label { display: flex; align-items: center; gap: 4px; }
+        .link-controls .group-name { font-weight: 600; }
+        /* legend sits over the bottom-left corner of the graph, so it never shifts the controls */
+        #graph-legend {
+          position: absolute; left: 12px; bottom: 12px; z-index: 5;
+          display: flex; flex-direction: column; gap: 4px;
+          padding: 6px 10px; border-radius: 6px;
+          background: rgba(15, 15, 18, 0.85); color: #eee;
+          font-size: 13px; white-space: nowrap; pointer-events: none;
+        }
+        #graph-legend .row { display: flex; align-items: center; gap: 12px; }
+        #graph-legend .swatch { display: inline-block; width: 22px; height: 6px; margin-right: 5px; vertical-align: middle; }
+        /* edge types: solid = greetings, hatched = letters (colour shows direction) */
+        #graph-legend .swatch.letter { background: repeating-linear-gradient(90deg, #a0a0a0 0 3px, #000 3px 5px); }
+        #graph-legend .note { opacity: 0.7; }
+      </style>
 
+      <div class="link-controls">
+        <span class="group-name">Letters</span>
+        <label title="Letter edges between persons who appear in the greeting data of this year">
+          <input type="checkbox" id="letters-inner" checked /> between greeting persons
+        </label>
+        <label title="All other letter edges of this year, and the persons who only appear in letters">
+          <input type="checkbox" id="letters-rest" /> all others
+        </label>
+      </div>
+
+      <button id="settings-toggle" title="Settings" aria-expanded="false">⚙</button>
       <button id="help-toggle" title="About this visualization">❓</button>
+    </div>
+
+    <div id="settings-panel" role="dialog" aria-label="Settings">
+      <h4>Settings</h4>
+      <label>
+        <input type="checkbox" id="setting-bullinger-letters" checked />
+        <span>Only show letters to or from Bullinger</span>
+      </label>
+      <div class="hint">When unticked, letters between other persons in the corpus are shown too (about 10% of all letters).</div>
     </div>
 
     <div id="sidebar" aria-hidden="true">
@@ -252,35 +307,47 @@
         </div>
 
         <h3>Edges</h3>
-        <p>Edges show relationships active during the selected year.</p>
+        <p>Edges show relationships active during the selected year. Their thickness is the number of greetings/letters in that year. Each edge is split into strands, one per direction and kind, each as thick as its share, with a white arrow pointing where it goes. Hover over an edge to see the counts.</p>
+        <h3>Greetings</h3>
+        <p>Every greeting has an intermediary: the person whose letter carries it, or who is asked to pass it on. Greetings are used to infer teams, and drawn in the direction they travel:</p>
         <ul>
-          <li>Grey edges represent <em>team relationships</em> based on greeting data*.</li>
-          <li>Black edges represent <em>actual correspondence</em> (letters sent/received).</li>
+          <li><span style="color:#3987e5"><b>Blue, type I</b></span>, greetings passed on <em>to</em> somebody: the writer asks the addressee to greet a third person, who is considered part of the addressee's team. Arrow: addressee → greeted person.</li>
+          <li><span style="color:#2ea043"><b>Green, type II</b></span>, greetings sent <em>from</em> somebody: the writer forwards greetings from a third person, who is considered part of the writer's team. Arrow: greeting person → writer.</li>
         </ul>
-        <p>In both cases, the thickness is exactly the number of mentions/letters in the selected year.</p>
-        <p>*The greeting data was used as follows:</p>
-        <ul>
-          <li>If a sender sends greetings <em>from</em> somebody, that person is considered part of his team and gets an edge to the sender.</li>
-          <li>If a sender sends greetings <em>to</em> somebody, that person is considered part of the addressee's team and gets an edge to addressee.</li>
-        </ul>
+        <h3>Letters</h3>
+        <p>Letters are drawn as grey rows of arrows ( --&gt;--&gt; ) from the writer to the addressee. Where a greeting edge and a letter edge join the same two persons, they are drawn next to each other. By default only letters to or from Bullinger are shown (see ⚙ settings).</p>
 
         <h3>Time</h3>
         <p>The slider filters the network to a specific year.</p>
         <p>The play button animates the historical evolution.</p>
 
+        <h3>Filtering</h3>
+        <p>The graph shows the persons who appear in the greeting data in the selected year, plus Heinrich Bullinger, who is always shown. All their greeting edges are always shown.</p>
+        <p>Letter edges come in two groups, each with its own checkbox: <em>between greeting persons</em> (both persons appear in the greeting data of that year; on by default) and <em>all others</em>. Ticking <em>all others</em> also adds the persons who only appear in letters.</p>
+        <p>The <em>Show</em> slider selects a percentage of these persons, starting with those with the most letters in the corpus (ties are broken by activity in that year).</p>
+
         <h3>Interaction</h3>
         <ul>
-          <li>Hover: highlight connections</li>
+          <li>Hover a person: highlight the person, their edges and everyone they are connected to</li>
           <li>Drag: move nodes</li>
-          <li>Click: open biography</li>
-          <li>Toggle: show/hide correspondence edges</li>
+          <li>Click a person: open biography</li>
+          <li>Hover an edge: its greetings ("X greets Z (via Y)") or letters</li>
+          <li>Click an edge: full list of its greetings or letters</li>
+          <li>Toggles: letter edges between greeting persons, and all other letter edges</li>
+          <li>⚙ Settings: by default only letters to or from Bullinger are shown; untick to include letters between other persons</li>
         </ul>
 
       </div>
     </div>
 
 
-    <div id="dynamic-graph-container"></div>
+    <div id="dynamic-graph-container">
+      <div id="graph-legend">
+        <div class="row"><span><span class="swatch" style="background:#3987e5"></span>greetings passed on to (addressee → greeted person)</span></div>
+        <div class="row"><span><span class="swatch" style="background:#2ea043"></span>greetings sent from (greeting person → writer)</span></div>
+        <div class="row"><span><svg width="40" height="8" viewBox="0 0 40 8" style="margin-right:5px;vertical-align:middle"><path fill="#a0a0a0" d="M1,3h8v-3l6,4l-6,4v-3h-8ZM21,3h8v-3l6,4l-6,4v-3h-8Z"/></svg>letters (writer → addressee)</span><span class="note">arrows show the direction</span></div>
+      </div>
+    </div>
 
     <script type="module">
       import * as d3 from "d3";
@@ -297,12 +364,165 @@
         fetch(`${BASE}person_gnd_wiki.json`).then((r) => r.json()), // <-- rename to your actual file
       ]);
 
+      // Wikipedia/GND info keyed by lower-case id, so "P495" matches node "p495"
+      const personInfoById = new Map(
+        Object.entries(personInfo || {}).map(([id, info]) => [id.toLowerCase(), info])
+      );
+
       const nodes = nodesData;
-      const links = linksData.map((l) => ({ ...l, linkType: "normal" }));
-      const correspondenceLinks = correspondenceData.map((l) => ({
-        ...l,
-        linkType: "correspondence",
-      }));
+      const nodeById = new Map(nodes.map((n) => [n.id, n]));
+
+      // The data has one row per directed pair and year. The graph draws one edge
+      // per unordered pair and year: thickness = sum of both directions, and
+      // ab / ba keep the count in each direction (sourceId -> targetId and back).
+      // Colours: greetings by type, letters neutral (their arrows show direction)
+      const COLOR_TYPE_I = "#3987e5";  // blue: greetings passed on to somebody
+      const COLOR_TYPE_II = "#2ea043"; // green: greetings sent from somebody
+      const COLOR_LETTER = "#a0a0a0";  // grey, hatched
+
+      // kinds of strands per link type, in drawing order
+      const KINDS = {
+        normal: [["I", COLOR_TYPE_I], ["II", COLOR_TYPE_II]],
+        correspondence: [["letter", COLOR_LETTER]],
+      };
+
+      // The data has one row per directed pair, year (and greeting type). The
+      // graph draws one edge per unordered pair and year: thickness = sum of
+      // everything; counts[kind].ab / .ba keep each direction (sourceId ->
+      // targetId and back), and strands lists them for drawing.
+      function buildPairLinks(rows, linkType) {
+        const byKey = new Map();
+        for (const r of rows) {
+          const kind = linkType === "normal" ? r.type : "letter";
+          const [a, b] = r.sourceId < r.targetId ? [r.sourceId, r.targetId] : [r.targetId, r.sourceId];
+          const key = `${r.start}|${a}|${b}`;
+          let p = byKey.get(key);
+          if (!p) {
+            p = { linkType, start: r.start, end: r.end, sourceId: a, targetId: b, source: a, target: b, counts: {}, rows: [] };
+            for (const [k] of KINDS[linkType]) p.counts[k] = { ab: 0, ba: 0 };
+            byKey.set(key, p);
+          }
+          p.counts[kind][r.sourceId === a ? "ab" : "ba"] += r.thickness;
+          p.rows.push(r);
+        }
+        for (const p of byKey.values()) {
+          p.strands = [];
+          for (const dir of ["ab", "ba"]) {
+            for (const [k, color] of KINDS[linkType]) {
+              p.strands.push({ dir, kind: k, count: p.counts[k][dir], color });
+            }
+          }
+          p.thickness = p.strands.reduce((s, x) => s + x.count, 0);
+        }
+        return byKey;
+      }
+
+      const greetingByKey = buildPairLinks(linksData, "normal");
+      const correspondenceByKey = buildPairLinks(correspondenceData, "correspondence");
+
+      // year -> links of that year (links are single-year rows)
+      function indexByYear(byKey) {
+        const m = new Map();
+        for (const l of byKey.values()) {
+          if (!m.has(l.start)) m.set(l.start, []);
+          m.get(l.start).push(l);
+        }
+        return m;
+      }
+      const greetingsByYear = indexByYear(greetingByKey);
+      const correspondenceByYear = indexByYear(correspondenceByKey);
+
+      // year -> set of persons with at least one greeting / letter edge that year
+      function involvedByYear(byKey) {
+        const m = new Map();
+        for (const l of byKey.values()) {
+          if (!m.has(l.start)) m.set(l.start, new Set());
+          m.get(l.start).add(l.sourceId).add(l.targetId);
+        }
+        return m;
+      }
+      const greetingPersonsByYear = involvedByYear(greetingByKey);
+      const correspondencePersonsByYear = involvedByYear(correspondenceByKey);
+
+      // year -> person -> greetings + letters that year (tie-breaker for ranking)
+      const activityByYear = new Map();
+      for (const byKey of [greetingByKey, correspondenceByKey]) {
+        for (const l of byKey.values()) {
+          if (!activityByYear.has(l.start)) activityByYear.set(l.start, new Map());
+          const m = activityByYear.get(l.start);
+          m.set(l.sourceId, (m.get(l.sourceId) || 0) + l.thickness);
+          m.set(l.targetId, (m.get(l.targetId) || 0) + l.thickness);
+        }
+      }
+
+      const personName = (id) => nodeById.get(id)?.name || id;
+
+      // Tooltip for an edge: counts per direction for greetings and letters of
+      // this pair in this year (both, even if only one edge type is visible).
+      const dot = (c) =>
+        `<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${c};margin-right:5px;vertical-align:middle"></span>`;
+
+      // Every greeting is "X greets Z (via Y)":
+      //   type I  rows run Y -> Z, "greeters" = the writer(s) X
+      //   type II rows run X -> Y, "greetees" = the addressee(s) Z
+      function greetingLines(link) {
+        const out = [];
+        for (const r of link.rows || []) {
+          if (r.type === "I") {
+            for (const [x, n] of Object.entries(r.greeters || {}))
+              out.push({ type: "I", x, z: r.targetId, y: r.sourceId, n });
+          } else {
+            for (const [z, n] of Object.entries(r.greetees || {}))
+              out.push({ type: "II", x: r.sourceId, z, y: r.targetId, n });
+          }
+        }
+        return out.sort((p, q) => q.n - p.n || p.type.localeCompare(q.type));
+      }
+
+      function greetingLineHTML(g) {
+        const c = g.type === "I" ? COLOR_TYPE_I : COLOR_TYPE_II;
+        return `<div>${dot(c)}${escapeHtml(personName(g.x))} greets ${escapeHtml(personName(g.z))} ` +
+          `<span style="opacity:.7">(via ${escapeHtml(personName(g.y))})</span>${g.n > 1 ? ` ×${g.n}` : ""}</div>`;
+      }
+
+      function letterLinesHTML(link) {
+        const a = escapeHtml(personName(link.sourceId)), b = escapeHtml(personName(link.targetId));
+        const c = link.counts.letter;
+        return [
+          c.ab ? `<div>${dot(COLOR_LETTER)}${a} → ${b}: ${c.ab}</div>` : "",
+          c.ba ? `<div>${dot(COLOR_LETTER)}${b} → ${a}: ${c.ba}</div>` : "",
+        ].join("");
+      }
+
+      const TOOLTIP_MAX_GREETINGS = 6;
+
+      // Tooltip: only what the hovered edge is about (greetings or letters)
+      function linkTooltipHTML(link) {
+        if (link.linkType === "correspondence") {
+          return `<div style="margin-bottom:4px"><b>Letters, ${link.start}: ${link.thickness}</b></div>` + letterLinesHTML(link);
+        }
+        const lines = greetingLines(link);
+        const shown = lines.slice(0, TOOLTIP_MAX_GREETINGS).map(greetingLineHTML).join("");
+        const more = lines.length - TOOLTIP_MAX_GREETINGS;
+        return `<div style="margin-bottom:4px"><b>Greetings, ${link.start}: ${link.thickness}</b></div>` + shown +
+          (more > 0 ? `<div style="opacity:.7;margin-top:4px">+${more} more · click the edge for the full list</div>` : "");
+      }
+
+      // Clicking an edge opens the full list in the side panel
+      function linkDetailsHTML(link) {
+        const a = escapeHtml(personName(link.sourceId)), b = escapeHtml(personName(link.targetId));
+        if (link.linkType === "correspondence") {
+          return `<h2>Letters, ${link.start}</h2><div class="meta">${a} – ${b}</div>` + letterLinesHTML(link);
+        }
+        const lines = greetingLines(link);
+        const section = (type, title) => {
+          const ls = lines.filter((g) => g.type === type);
+          return ls.length ? `<h3 style="font-size:14px;margin:14px 0 6px">${title}</h3>` + ls.map(greetingLineHTML).join("") : "";
+        };
+        return `<h2>Greetings, ${link.start}</h2><div class="meta">${a} – ${b}, ${link.thickness} in total</div>` +
+          section("I", "Greetings passed on to somebody (type I)") +
+          section("II", "Greetings sent from somebody (type II)");
+      }
 
       // Select container and measure bounds
       const container = d3.select("#dynamic-graph-container");
@@ -353,7 +573,8 @@
 
       function openSidebarForNode(node) {
         // Your nodes seem to have ids like "P1". Use node.id as key.
-        const info = personInfo?.[node.id] || null;
+        // person_gnd_wiki.json uses "P495", the nodes use "p495"
+        const info = personInfoById.get(String(node.id).toLowerCase()) || null;
 
         const wiki = info?.wiki || null;
         const gnd = info?.gnd || null;
@@ -367,7 +588,7 @@
         sidebarContentEl.innerHTML = `
           <h2>${escapeHtml(title)}</h2>
           ${desc ? `<div class="meta">${escapeHtml(desc)}</div>` : ""}
-          ${thumb ? `<img class="thumb" src="${thumb}" alt="${escapeHtml(title)}" />` : ""}
+          ${thumb ? `<img class="thumb" src="${escapeHtml(thumb)}" alt="${escapeHtml(title)}" />` : ""}
           ${summary ? `<p>${escapeHtml(summary)}</p>` : `<p><em>No wiki summary available.</em></p>`}
 
           <hr style="border:0;border-top:1px solid rgba(255,255,255,0.12);margin:12px 0" />
@@ -378,6 +599,27 @@
           </div>
         `;
 
+        // Newer Wikipedia API answers point thumbnails to thumb.wikimedia.org; if one
+        // fails to load, retry the same path on upload.wikimedia.org, else hide it.
+        const img = sidebarContentEl.querySelector("img.thumb");
+        if (img) {
+          img.addEventListener("error", () => {
+            const fallback = img.src.replace("//thumb.wikimedia.org/", "//upload.wikimedia.org/").split("?")[0];
+            if (!img.dataset.retried && fallback !== img.src) {
+              img.dataset.retried = "1";
+              img.src = fallback;
+            } else {
+              img.remove();
+            }
+          });
+        }
+
+        sidebarEl.classList.add("open");
+        sidebarEl.setAttribute("aria-hidden", "false");
+      }
+
+      function openSidebarForLink(link) {
+        sidebarContentEl.innerHTML = linkDetailsHTML(link);
         sidebarEl.classList.add("open");
         sidebarEl.setAttribute("aria-hidden", "false");
       }
@@ -412,13 +654,23 @@
 
       let { width, height } = getSize();
 
+      const BULLINGER = "p495";
+
       // pass topOffset so the simulation can keep nodes/labels out from under the controls
       const vis = DynamicGraph(container, d3, {
         width,
         height,
         topOffset: getTopOffset(),
-        onNodeClick: (node) => openSidebarForNode(node),
-        onBackgroundClick: () => closeSidebar(), // only if you added svg.on("click"...)
+        onNodeClick: (node) => {
+          setSettingsOpen(false); // node clicks don't reach the document listener
+          openSidebarForNode(node);
+        },
+        onBackgroundClick: () => closeSidebar(),
+        linkTooltipInnerHTML: linkTooltipHTML,
+        onLinkClick: (link) => {
+          setSettingsOpen(false);
+          openSidebarForLink(link);
+        },
       }).nodeRadius((d) => d.radius);
 
       function getNodeColorAtTime(node, t) {
@@ -431,58 +683,111 @@
         return node.color;
       }
 
-      function filterLinks(linkArray, activeIds, t) {
-        return linkArray
-          .filter((l) => l.start <= t && l.end >= t)
-          .filter((l) => activeIds.has(l.sourceId) && activeIds.has(l.targetId));
+      function linksAmong(byYear, activeIds, t) {
+        return (byYear.get(t) || []).filter(
+          (l) => activeIds.has(l.sourceId) && activeIds.has(l.targetId)
+        );
       }
 
-      function filterByTime(t, topN = null) {
-        // keep topOffset up-to-date (e.g., if controls wrap to 2 lines)
+      // Controls
+      const timeSlider = d3.select("#time-slider");
+      const timeLabel = d3.select("#time-value");
+      const pctSlider = d3.select("#pct-slider");
+      const pctLabel = d3.select("#pct-value");
+      const lettersInner = d3.select("#letters-inner");
+      const lettersRest = d3.select("#letters-rest");
+
+      // --- Settings panel ---
+      const settingsPanel = document.getElementById("settings-panel");
+      const settingsToggle = document.getElementById("settings-toggle");
+      const bullingerLettersOnly = d3.select("#setting-bullinger-letters");
+      function setSettingsOpen(open) {
+        settingsPanel.classList.toggle("open", open);
+        settingsToggle.setAttribute("aria-expanded", String(open));
+      }
+      settingsToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setSettingsOpen(!settingsPanel.classList.contains("open"));
+      });
+      settingsPanel.addEventListener("click", (e) => e.stopPropagation());
+      document.addEventListener("click", () => setSettingsOpen(false));
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") setSettingsOpen(false); });
+
+      const involvesBullinger = (l) => l.sourceId === BULLINGER || l.targetId === BULLINGER;
+      // persons per year in letters to/from Bullinger only (used when the setting is on)
+      const bullingerLetterPersonsByYear = involvedByYear(
+        new Map([...correspondenceByKey].filter(([, l]) => involvesBullinger(l)))
+      );
+      const ALWAYS_SHOWN = [BULLINGER];
+
+      function filterByTime(t, pct) {
         vis.pubVar({ year: t, topOffset: getTopOffset() });
 
-        let filteredNodes = nodes.filter((n) => n.start <= t && n.end >= t);
-
-        if (topN !== null && topN > 0 && topN < filteredNodes.length) {
-          filteredNodes = filteredNodes
-            .slice()
-            .sort((a, b) => b.radius - a.radius)
-            .slice(0, topN);
+        // Persons shown: everyone in the greeting data of year t (plus Bullinger);
+        // with "all others" ticked also everyone in the letter data of year t.
+        // Ranked by letters in the corpus, ties by their activity in that year.
+        const yearActivity = activityByYear.get(t) || new Map();
+        const greetingIds = new Set(greetingPersonsByYear.get(t) || []);
+        greetingIds.add(BULLINGER); // Bullinger counts as part of the greeting network
+        const poolIds = new Set(greetingPersonsByYear.get(t) || []);
+        if (lettersRest.property("checked")) {
+          const letterPersons = bullingerLettersOnly.property("checked")
+            ? bullingerLetterPersonsByYear
+            : correspondencePersonsByYear;
+          for (const id of letterPersons.get(t) || []) poolIds.add(id);
         }
+        // Bullinger always belongs to the group while he is active
+        for (const id of ALWAYS_SHOWN) {
+          const n = nodeById.get(id);
+          if (n && n.start <= t && n.end >= t) poolIds.add(id);
+        }
+        const active = [...poolIds]
+          .map((id) => nodeById.get(id))
+          .filter(Boolean)
+          .sort((a, b) =>
+            (b.count || 0) - (a.count || 0) ||
+            (yearActivity.get(b.id) || 0) - (yearActivity.get(a.id) || 0)
+          );
+
+        const shown = active.length ? Math.max(1, Math.round((active.length * pct) / 100)) : 0;
+        const filteredNodes = active.slice(0, shown);
+        // Bullinger is always shown (if alive/active in that year), whatever the filters
+        for (const id of ALWAYS_SHOWN) {
+          const n = nodeById.get(id);
+          if (n && n.start <= t && n.end >= t && !filteredNodes.includes(n)) filteredNodes.unshift(n);
+        }
+        pctLabel.text(`${pct}% (${filteredNodes.length} of ${active.length})`);
 
         filteredNodes.forEach((node) => {
           node.color = getNodeColorAtTime(node, t);
         });
 
         const activeIds = new Set(filteredNodes.map((n) => n.id));
-        const includeCorr = corrToggle.property("checked");
-
-        const activeLinks = [
-          ...filterLinks(links, activeIds, t),
-          ...(includeCorr ? filterLinks(correspondenceLinks, activeIds, t) : []),
-        ];
+        // greeting edges always; letter edges between the persons shown, split into
+        // "between greeting persons" (both ends in the greeting data) and the rest
+        const showInner = lettersInner.property("checked");
+        const showRest = lettersRest.property("checked");
+        const onlyBullinger = bullingerLettersOnly.property("checked");
+        const letterLinks = linksAmong(correspondenceByYear, activeIds, t).filter((l) => {
+          if (onlyBullinger && !involvesBullinger(l)) return false;
+          const inner = greetingIds.has(l.sourceId) && greetingIds.has(l.targetId);
+          return inner ? showInner : showRest;
+        });
+        const activeLinks = [...linksAmong(greetingsByYear, activeIds, t), ...letterLinks];
 
         vis.updateVis(filteredNodes, activeLinks);
       }
 
-      // Slider
-      const timeSlider = d3.select("#time-slider");
-      const timeLabel = d3.select("#time-value");
-      const corrToggle = d3.select("#correspondence-toggle");
-      const topnSlider = d3.select("#topn-slider");
-      const topnLabel = d3.select("#topn-value");
-
       function updateFromSliders() {
         const t = +timeSlider.property("value");
-        const n = +topnSlider.property("value");
         timeLabel.text(t);
-        topnLabel.text(n >= nodes.length ? "All" : n);
-        filterByTime(t, n);
+        filterByTime(t, +pctSlider.property("value"));
       }
 
-      timeSlider.on("input", updateFromSliders);
-      topnSlider.on("input", updateFromSliders);
-      corrToggle.on("change", updateFromSliders);
+      pctSlider.on("input", updateFromSliders);
+      lettersInner.on("change", updateFromSliders);
+      lettersRest.on("change", updateFromSliders);
+      bullingerLettersOnly.on("change", updateFromSliders);
 
       // --- Play / Pause ---
       const playBtn = document.getElementById("play-toggle");
@@ -535,10 +840,10 @@
         setControlsHeightVar();
         const size = getSize();
         vis.pubVar({ width: size.width, height: size.height, topOffset: getTopOffset() });
-        filterByTime(+timeSlider.property("value"), +topnSlider.property("value"));
+        filterByTime(+timeSlider.property("value"), +pctSlider.property("value"));
       });
 
-      // initial render
+      // initial render (also picks up checkbox states the browser restored on reload)
       updateFromSliders();
 
       // --- open help on first visit ---
