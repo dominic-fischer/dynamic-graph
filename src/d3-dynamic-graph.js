@@ -5,7 +5,27 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     width: window.innerWidth,
     height: window.innerHeight,
     transitionTime: 10, // milliseconds
-    centeringForce: 0.1,
+
+    // LAYOUT -- all distances scale with the space per person on screen
+    // (sqrt(graph area / number of persons)), so the layout behaves the same
+    // with 10 or 120 persons.
+    layout: {
+      fillRatio: 0.12, // max. share of the graph area covered by circles; circles shrink (keeping their proportions) when needed
+      minRadius: 3, // px, smallest circle after shrinking
+      nodePadding: 6, // px kept free around every circle
+      repulsion: 2.5, // how strongly persons push each other apart (x space per person)
+      repulsionRange: 8, // up to which distance they push (x space per person); limits the push towards the screen edges
+      greetingLength: 0.6, // preferred extra length of greeting edges (x space per person, on top of the two radii)
+      letterLength: 1.0, // same for letter edges
+      greetingPull: 0.3, // how strongly greeting edges pull to that length (0..1)
+      letterPull: 0.03, // same for letter edges (weak: almost all letters go to Bullinger)
+      centering: 0.005, // pull towards the centre of the graph area
+      wallMargin: 0.3, // soft walls: within this distance of the screen edge (x space per person) ...
+      wallStrength: 3, // ... persons are pushed back inwards this strongly
+      friction: 0.6, // 0..1, higher = calmer
+    },
+    // rectangles (graph coordinates) persons must stay out of, e.g. the legend
+    avoidRects: () => [],
     nodeRefProp: "id",
     unfocusOpacity: 0.6,
     focusOpacity: 0.95,
@@ -34,7 +54,13 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     linkTooltipInnerHTML: (link) => `${link.thickness}`,
   };
 
-  if (optionalPubVars) pubVar = { ...pubVar, ...optionalPubVars };
+  // layout settings are merged, so passing only some of them keeps the rest
+  const mergeVars = (base, updates) => ({
+    ...base,
+    ...updates,
+    ...(updates.layout ? { layout: { ...base.layout, ...updates.layout } } : {}),
+  });
+  if (optionalPubVars) pubVar = mergeVars(pubVar, optionalPubVars);
 
   // Private state
   let link, node, label, simulation;
@@ -44,6 +70,11 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
   // change, never stored on the node data, so nothing can stay lit by accident.
   let litIds = new Set();
   const idOf = (end) => (typeof end === "object" ? end[pubVar.nodeRefProp] : end);
+
+  // circle and edge sizes on screen = data sizes x scale (scale <= 1, set per update)
+  let scale = 1;
+  let spacing = 100; // space per person in px, set per update
+  const R = (d) => Math.max(pubVar.layout.minRadius, pubVar.nodeRadius(d) * scale);
 
   const svg = d3SelectedVisContainer
     .append("svg")
@@ -118,10 +149,10 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
   const isArrowRow = (d) => !!pubVar.arrowRowLinkTypes[d.linkType];
 
   function linkWidth(d) {
-    const base = d.thickness || pubVar.unfocusStrokeThickness;
+    const base = Math.max(1, (d.thickness || pubVar.unfocusStrokeThickness) * scale);
     if (!isFocusedLink(d)) return base;
     // emphasise on focus: double, but no wider than the smaller node's diameter
-    const maxAllowed = Math.min(pubVar.nodeRadius(d.source), pubVar.nodeRadius(d.target)) * 2;
+    const maxAllowed = Math.min(R(d.source), R(d.target)) * 2;
     return base * Math.max(1, Math.min(2, maxAllowed / base));
   }
 
@@ -293,6 +324,35 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     label
       .style("opacity", (n) => (litIds.has(n.id) ? pubVar.focusOpacity : pubVar.unfocusOpacity))
       .style("font-size", (n) => (litIds.has(n.id) ? "16px" : "12px"));
+    declutterLabels();
+  }
+
+  // Names that would overlap are hidden: highlighted persons first, then larger
+  // circles win. Hidden names show up again when their person is highlighted.
+  function declutterLabels() {
+    if (!label) return;
+    const items = [];
+    label.each(function (d) {
+      if (this.__w === undefined || this.__wText !== this.textContent) {
+        this.__w = this.getComputedTextLength() || 0;
+        this.__wText = this.textContent;
+        this.__wSize = this.style.fontSize;
+      }
+      const lit = litIds.has(d.id);
+      const w = lit ? this.__w * (16 / 12) : this.__w; // measured at 12px
+      const h = lit ? 16 : 12;
+      const x = d.x, y = d.y - R(d) - 6;
+      items.push({ el: this, lit, r: R(d), box: [x - w / 2 - 2, y - h, x + w / 2 + 2, y + 3] });
+    });
+    items.sort((a, b) => (b.lit - a.lit) || (b.r - a.r));
+    const placed = [];
+    for (const it of items) {
+      const [x1, y1, x2, y2] = it.box;
+      const clash = placed.some(([a1, b1, a2, b2]) => x1 < a2 && a1 < x2 && y1 < b2 && b1 < y2);
+      const show = it.lit || !clash;
+      it.el.style.visibility = show ? "visible" : "hidden";
+      if (show) placed.push(it.box);
+    }
   }
 
   function refreshFocus() {
@@ -311,24 +371,26 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
   }
 
   // 5. TICK -------------------------------------------------------------------------
+  let tickCount = 0;
   function ticked() {
     node
-      .attr("r", pubVar.nodeRadius)
+      .attr("r", R)
       .attr("fill", nodeFill)
       .attr("cx", (d) => {
-        const r = pubVar.nodeRadius(d);
+        const r = R(d);
         d.x = Math.max(r, Math.min(pubVar.width - r, d.x));
         return d.x;
       })
       .attr("cy", (d) => {
-        const r = pubVar.nodeRadius(d);
+        const r = R(d);
         d.y = Math.max(pubVar.topOffset + r, Math.min(pubVar.height - r, d.y));
         return d.y;
       });
 
     positionLinks();
 
-    label.attr("x", (d) => d.x).attr("y", (d) => d.y - pubVar.nodeRadius(d) - 6);
+    label.attr("x", (d) => d.x).attr("y", (d) => d.y - R(d) - 6);
+    if (++tickCount % 5 === 0 || simulation.alpha() < simulation.alphaMin() * 2) declutterLabels();
   }
 
   // 6. UPDATE GRAPH AFTER FILTERING DATA ------------------------------------------------------
@@ -336,29 +398,56 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
     if (!simulation) {
       simulation = d3
         .forceSimulation()
-        .force(
-          "link",
-          d3.forceLink()
-            .id((n) => n[pubVar.nodeRefProp])
-            .distance((l) => (l.linkType === "correspondence" ? 160 : 35))
-            .strength((l) => (l.linkType === "correspondence" ? 0.005 : 0.2))
-        )
-        .force("charge", d3.forceManyBody().strength(-800))
-        .force("x", d3.forceX(pubVar.width / 2).strength(pubVar.centeringForce))
-        .force("y", d3.forceY(pubVar.height / 2).strength(pubVar.centeringForce))
-        .velocityDecay(0.4)
+        .force("link", d3.forceLink().id((n) => n[pubVar.nodeRefProp]))
+        .force("charge", d3.forceManyBody())
+        .force("x", d3.forceX())
+        .force("y", d3.forceY())
+        .force("collide", d3.forceCollide().iterations(2))
         .force("bounds", () => {
+          // keep circles inside the graph area and out of reserved rectangles (legend)
+          const rects = pubVar.avoidRects() || [];
+          const L = pubVar.layout, alpha = simulation.alpha();
+          const m = spacing * L.wallMargin, k = L.wallStrength * alpha;
+          const top = pubVar.topOffset, W = pubVar.width, H = pubVar.height;
           for (const d of simulation.nodes()) {
-            const r = pubVar.nodeRadius(d);
-            if (d.y > pubVar.height - r) { d.y = pubVar.height - r; d.vy = 0; }
+            const r = R(d);
+            // soft walls: push back inwards before the edge is reached
+            if (d.x - r < m) d.vx += (m - (d.x - r)) * k;
+            if (W - d.x - r < m) d.vx -= (m - (W - d.x - r)) * k;
+            if (d.y - r - top < m) d.vy += (m - (d.y - r - top)) * k;
+            if (H - d.y - r < m) d.vy -= (m - (H - d.y - r)) * k;
+            if (d.x < r) { d.x = r; d.vx = 0; }
+            if (d.x > pubVar.width - r) { d.x = pubVar.width - r; d.vx = 0; }
             if (d.y < pubVar.topOffset + r) { d.y = pubVar.topOffset + r; d.vy = 0; }
+            if (d.y > pubVar.height - r) { d.y = pubVar.height - r; d.vy = 0; }
+            for (const q of rects) {
+              const x1 = q.x - r, y1 = q.y - r, x2 = q.x + q.width + r, y2 = q.y + q.height + r;
+              if (d.x > x1 && d.x < x2 && d.y > y1 && d.y < y2) {
+                // push out through the nearest side
+                const opts = [[d.x - x1, "x", x1], [x2 - d.x, "x", x2], [d.y - y1, "y", y1], [y2 - d.y, "y", y2]];
+                const [, axis, v] = opts.sort((a, b) => a[0] - b[0])[0];
+                d[axis] = v;
+                d[axis === "x" ? "vx" : "vy"] = 0;
+              }
+            }
           }
         })
-        .force("collide", d3.forceCollide().radius((d) => pubVar.nodeRadius(d) + 15).strength(0.7))
         .on("tick", ticked);
     }
 
     simulation.stop();
+
+    // --- LAYOUT SCALE: circle sizes and distances from the space available ---
+    const L = pubVar.layout;
+    const area = pubVar.width * Math.max(1, pubVar.height - pubVar.topOffset);
+    const circleArea = nodes.reduce((s, d) => s + Math.PI * (pubVar.nodeRadius(d) + L.nodePadding) ** 2, 0) || 1;
+    scale = Math.min(1, Math.sqrt((L.fillRatio * area) / circleArea));
+    spacing = Math.sqrt(area / Math.max(1, nodes.length));
+
+    simulation.force("charge").strength(-spacing * L.repulsion).distanceMax(spacing * L.repulsionRange);
+    simulation.force("x").x(pubVar.width / 2).strength(L.centering);
+    simulation.force("y").y(pubVar.topOffset + (pubVar.height - pubVar.topOffset) / 2).strength(L.centering);
+    simulation.force("collide").radius((d) => R(d) + L.nodePadding).strength(1);
 
     // --- NODES ---
     const gridCols = 3, gridRows = 3, jitter = 60;
@@ -384,7 +473,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
             .attr("r", 0)
             .attr("fill", nodeFill)
             .call((sel) =>
-              sel.transition().duration(pubVar.transitionTime).attr("r", (d) => pubVar.nodeRadius(d))
+              sel.transition().duration(pubVar.transitionTime).attr("r", (d) => R(d))
             )
             .on("mouseover", (event, d) => {
               showTooltip(event, pubVar.tooltipInnerHTML(d));
@@ -421,7 +510,10 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
 
     // --- LINKS ---
     simulation.nodes(nodes);
-    simulation.force("link").links(links); // resolves source/target to node objects
+    simulation.force("link")
+      .links(links) // resolves source/target to node objects
+      .distance((l) => R(l.source) + R(l.target) + spacing * (l.linkType === "correspondence" ? L.letterLength : L.greetingLength))
+      .strength((l) => (l.linkType === "correspondence" ? L.letterPull : L.greetingPull));
 
     link = linkLayer
       .selectAll("g.link")
@@ -503,7 +595,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
       simulation.alpha(interpolator(t)).restart();
       if (t === 1) rampUp.stop();
     });
-    simulation.velocityDecay(0.7);
+    simulation.velocityDecay(L.friction);
   }
 
   // DRAG EVENTS ______________________________
@@ -543,7 +635,7 @@ const DynamicGraph = (d3SelectedVisContainer, d3, optionalPubVars) => {
 
   _DynamicGraph.pubVar = (pubVarUpdates) => {
     if (!pubVarUpdates) return pubVar;
-    pubVar = { ...pubVar, ...pubVarUpdates };
+    pubVar = mergeVars(pubVar, pubVarUpdates);
     if (pubVarUpdates.width || pubVarUpdates.height) {
       svg.attr("width", pubVar.width).attr("height", pubVar.height);
     }

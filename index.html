@@ -276,7 +276,7 @@
         <h2>About this visualization</h2>
 
         <h3>Nodes</h3>
-        <p>Each circle represents a person, whereby size indicates importance based on correspondence volume in the Bullinger Corpus. It is proportional to the number of letters sent and received. Note that the maximum size is clamped to the second largest node, as Bullinger himself is an outlier in correspondence volume.</p>
+        <p>Each circle represents a person, whereby size indicates importance based on correspondence volume in the Bullinger Corpus. It is proportional to the number of letters sent and received. Note that the maximum size is clamped to the second largest node, as Bullinger himself is an outlier in correspondence volume. When many persons are shown at once, all circles shrink by the same factor so that everybody fits on the screen.</p>
         <h3>Geographic colour mapping</h3>
         <p>Color indicates the main location in a year, i.e., where the most correspondence was exchanged. A place's colours are based on its coordinates, whereby:</p>
         <ul>
@@ -656,11 +656,19 @@
 
       const BULLINGER = "p495";
 
-      // pass topOffset so the simulation can keep nodes/labels out from under the controls
+      // The graph area already starts below the controls, so no extra top offset.
+      // The legend overlays the bottom-left corner: persons are kept out of it.
+      const legendEl = document.getElementById("graph-legend");
+      const legendRect = () => {
+        const c = container.node().getBoundingClientRect();
+        const r = legendEl.getBoundingClientRect();
+        return [{ x: r.left - c.left - 4, y: r.top - c.top - 4, width: r.width + 8, height: r.height + 8 }];
+      };
       const vis = DynamicGraph(container, d3, {
         width,
         height,
-        topOffset: getTopOffset(),
+        topOffset: 0,
+        avoidRects: legendRect,
         onNodeClick: (node) => {
           setSettingsOpen(false); // node clicks don't reach the document listener
           openSidebarForNode(node);
@@ -721,7 +729,7 @@
       const ALWAYS_SHOWN = [BULLINGER];
 
       function filterByTime(t, pct) {
-        vis.pubVar({ year: t, topOffset: getTopOffset() });
+        vis.pubVar({ year: t });
 
         // Persons shown: everyone in the greeting data of year t (plus Bullinger);
         // with "all others" ticked also everyone in the letter data of year t.
@@ -839,7 +847,7 @@
       window.addEventListener("resize", () => {
         setControlsHeightVar();
         const size = getSize();
-        vis.pubVar({ width: size.width, height: size.height, topOffset: getTopOffset() });
+        vis.pubVar({ width: size.width, height: size.height });
         filterByTime(+timeSlider.property("value"), +pctSlider.property("value"));
       });
 
